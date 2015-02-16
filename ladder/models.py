@@ -12,7 +12,7 @@ class Game(models.Model):
     slug = models.CharField(max_length=50, blank=True, editable=False)
     icon = models.ImageField(upload_to='img/games', blank=True)
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         self.slug = slugify(self.name)
         super(Game, self).save()
 
@@ -43,7 +43,7 @@ class Ladder(models.Model):
         """Gets number of players on ladder."""
         return Rank.objects.filter(ladder=self).count()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         self.slug = slugify(self.name)
         super(Ladder, self).save()
 
