@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<h1>{{ ladder.name }}</h1>
+<h4><em>{{ ladder.game.name }}</em></h4>
+<p>{{ ladder.description }}</p>
+
+<hr>
+<h2>People Available to Challenge</h2>
+{% for player in possible_challengers %}
+{{ player }}
+{% endfor %}
+
+{% endblock content %}

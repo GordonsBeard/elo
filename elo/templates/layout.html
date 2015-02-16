@@ -1,0 +1,30 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="shortcut icon" href="{% static "img/favicon.ico" %}" type="image/x-icon"/>
+        <link rel="stylesheet" href="{% static "css/reset.css" %}" />
+        <link rel="stylesheet" href="{% static "css/layout.css" %}" />
+        <link rel="stylesheet" href="{% static "css/tags.css" %}" />
+        {% block head%}{% endblock head %}
+
+        <title>ELO, World!</title>
+    </head>
+
+    <body>
+        <div id="topper">
+            <span class="title"><a href="/">ELO</a> - Electronic Ladder Organizer</span>
+            {% if user.is_authenticated %}<p>Logged in as: {{ user.username }}</a> (<a href="/logout">logout</a>){% else %}<a href="/openid/login">Log In</a>{% endif %}
+        </div>
+
+
+        <div id="content">
+            {% block content %}{% endblock content %}
+        </div><!-- content -->
+
+
+        <div id="footer">
+            <a href="http://steampowered.com" title="Powered by Steam">Powered by Steam</a> + <a href="https://github.com/GordonsBeard/elo" title="Github Code">Github Repo</a>{% if user.is_staff %} + <a href="/admin">Admin Site</a>{% endif %}
+        </div><!-- footer -->
+    </body>
+</html>

@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block head %}{% endblock head %}
+
+
+{% block content %}
+
+<h2>Ladders:</h2>
+<ul>
+{% for ladder in ladder_list %}
+<li><a href="{{ ladder.get_absolute_url }}">{{ ladder }}</a> ({{ ladder.game.abv }})</li>
+{% endfor %}
+</ul>
+
+{% if your_challenges %}
+<hr>
+<h2>Your Challenges</h2>
+<ul>
+    {% for challenge in your_challenges %}
+    <li>{{ challenge }}</li>  
+    {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+<h2>Recent Matches:</h2>
+<table>
+<tr>
+    <th>Date</th>
+    <th colspan="2">Challenger</th>
+    <td></td>
+    <th colspan="2">Defender</th>
+    <th>Ladder</th>
+    <th>Winner</th>
+</tr>
+{% for match in match_list %}
+{% if match.winner %}
+<tr>
+    <td>{{ match.date_complete|naturaltime }}</td>
+    <td><img src="{{ match.challenger.get_profile.avatar }}" /></td>
+    <td>{{ match.challenger.get_profile.handle }}</td>
+    <td><strong>vs</strong></td>
+    <td><img src="{{ match.challengee.get_profile.avatar }}" /></td>
+    <td>{{ match.challengee.get_profile.handle }}</td>
+    <td>{{ match.ladder.name }}</td>
+    <td><img src="{{ match.winner.get_profile.avatarM }}" /></td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+{% endblock content %}

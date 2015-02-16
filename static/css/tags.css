@@ -1,0 +1,53 @@
+a{
+}
+h1{
+    font-size: 28px;
+    font-weight: bold;
+    display: block;
+}
+
+h2{
+    font-size: 24px;
+    font-weight: bold;
+    display: block;
+}
+
+
+h3{
+    font-size: 20px;
+    font-weight: bold;
+    display: block;
+}
+
+h4{
+    font-size: 18px;
+    font-weight: bold;
+    display: block;
+}
+
+h5{ 
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+}
+
+
+pre { font-family: monospace; }
+
+blockquote{
+    line-height: 130%;
+    padding: 1em 2em 1em 1em;
+}
+
+strong { font-weight: bold; }
+
+em { font-style: italic; }
+
+ul { margin: 1em; }
+table { margin: 1em; }
+th { font-weight: bold; }
+td { padding: .25em; }
+
+td .rank1st{ font-weight: bold;  font-size: 18px;}
+td .rank2nd{ font-weight: bold;  font-size: 16px;}
+td .rank3rd{ font-weight: bold; font-size: 14px;}

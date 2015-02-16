@@ -1,4 +1,5 @@
-elo
+ELO
 ===
+Electronic Ladder Organizer
 
-Cafe Electronic Ladder Organizer - a simple ladder system for any game.
+Pronounced "E. L. O." as it's an actual acronym, unlike Elo.

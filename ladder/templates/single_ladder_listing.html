@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load ladder_extras %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+{% load humanize %}
+
+<h1>{{ ladder.name }}</h1>
+<h4><em>{{ ladder.game.name }}</em></h4>
+<p>{{ ladder.description }}</p>
+<br>
+{% if user.is_authenticated and join_link %}<a href="{{ ladder.get_absolute_url }}/join">Join This Ladder!</a>{% endif %}
+<p class="message">{% if message %}{{ message }}{% endif %}</p>
+{% if rank_list %}
+{% if not join_link and current_player_rank %}<p>Your current rank on the ladder is: {{ current_player_rank.rank|ordinal }}</p>{% endif %}
+<hr>
+<h2>Current Ranks</h2>
+<table>
+    <tr>
+        <td colspan="2"></td>
+        <th>Player</th>
+    </tr>
+    {% for player_rank in rank_list %}
+    <tr>
+        <td>{{ player_rank.rank|ordinal }}</td>
+        <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
+        <td><span class="rank{{ player_rank.rank|ordinal }}">{{ player_rank.player.userprofile.handle }}</span></td>
+        <td>{% can_user_be_challenged user player_rank.player ladder %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% if open_challenges %}
+<hr>
+<h2>Open Challenges</h2>
+<ul>
+    {% for challenge in open_challenges %}
+    <li><img src="{{ challenge.challenger.userprofile.avatar }}" />{% if challenge.challenger_rank %} [{{ challenge.challenger_rank }}{{ challenge.get_challenger_rank_icon_display }}]{% endif %}vs <img src="{{ challenge.challengee.userprofile.avatar }}" />{% if challenge.challengee_rank %} [{{ challenge.challengee_rank }}{{ challenge.get_challengee_rank_icon_display }}]{% endif %}{% if challenge.deadline %} <em>{{ challenge.deadline|naturaltime }}</em>{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<hr>
+<h2>Recent Matches:</h2>
+<table>
+<tr>
+    <th>Date</th>
+    <th colspan="2">Challenger</th>
+    <td></td>
+    <th colspan="2">Defender</th>
+    <th colspan="2">Winner</th>
+</tr>
+{% for match in match_list %}
+{% if match.winner %}
+<tr>
+    <td>{{ match.date_complete|naturaltime }}</td>
+    <td><img src="{{ match.challenger.userprofile.avatar }}" /></td>
+    <td>{{ match.challenger.userprofile.handle }}{% if match.challenger_rank %} [{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]{% endif %}</td>
+    <td><strong>vs</strong></td>
+    <td><img src="{{ match.challengee.userprofile.avatar }}" /></td>
+    <td>{{ match.challengee.userprofile.handle }}{% if match.challengee_rank %} [{{ match.challengee_rank }}{{ match.get_challengee_rank_icon_display }}]{% endif %}</td>
+    <td><img src="{{ match.winner.userprofile.avatar }}" /></td>
+    <td><em>{{ match.winner.userprofile.handle }}</em>{% if match.winner_rank %} [{{ match.winner_rank }}{{ match.get_winner_rank_icon_display }}]{% endif %}</td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+{% endblock content %}
