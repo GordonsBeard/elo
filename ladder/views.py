@@ -38,7 +38,7 @@ def join_ladder(request, ladder):
         player_rank = Rank.objects.get(player=request.user, ladder=ladder_requested)
         message = u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count())
     except ObjectDoesNotExist:
-        new_rank = Rank(player=request.user, rank=rank_list.count()+1, arrow=0, ladder=ladder_requested)
+        new_rank = Rank(player=request.user, rank=rank_list.count() + 1, arrow=0, ladder=ladder_requested)
         new_rank.save()
         rank_list = Rank.objects.filter(ladder=ladder_requested)
         message = u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count())

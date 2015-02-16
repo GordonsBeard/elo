@@ -33,6 +33,9 @@
     <Compile Include="elo\wsgi.py" />
     <Compile Include="elo\__init__.py" />
     <Compile Include="ladder\admin.py" />
+    <Compile Include="ladder\ladder_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ladder\models.py" />
     <Compile Include="ladder\templatetags\ladder_extras.py" />
     <Compile Include="ladder\templatetags\__init__.py" />
