@@ -10,7 +10,7 @@ urlpatterns = patterns('',
     url(r'^openid/complete/$',      'elo.views.login'),
     url(r'^openid/',                include('django_openid_auth.urls')),
     url(r'^logout/$',               'elo.views.logout_view'),
-    url(r'^l/',                     include('ladder.urls')),
+    url(r'^l/',                     include('ladder.urls', namespace = "ladder")),
 )
 
 if settings.DEBUG:

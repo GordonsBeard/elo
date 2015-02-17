@@ -81,5 +81,13 @@ def challenge_list(request, ladderslug, challengee):
   
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
-def issue_challenge(request, ladderslug, challengee):
-    raise NotImplementedError()
+def issue_challenge(request):
+    challengee_id = request.POST['challengee']
+
+    challengee = User.objects.get(pk=challengee_id)
+    ladder_slug = request.POST['ladder']
+
+    ladder = Ladder.objects.get(slug=ladder_slug)
+
+    messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+    return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))

@@ -6,14 +6,10 @@
 
 {% block content %}
 
-<h1>{{ ladder.name }}</h1>
-<h4><em>{{ ladder.game.name }}</em></h4>
-<p>{{ ladder.description }}</p>
-
-<hr>
-<h2>People Available to Challenge</h2>
-{% for player in possible_challengers %}
-{{ player }}
-{% endfor %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
 
 {% endblock content %}

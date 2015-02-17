@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% load staticfiles %}
-{% load ladder_extras %}
+{# load ladder_extras #}
 
 {% block head %}{% endblock head %}
 
@@ -28,13 +28,21 @@
         <td colspan="2"></td>
         <th>Player</th>
     </tr>
-    {% for player_rank in rank_list %}
-    <tr>
-        <td>{{ player_rank.rank|ordinal }}</td>
-        <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
-        <td><span class="rank{{ player_rank.rank|ordinal }}">{{ player_rank.player.userprofile.handle }}</span></td>
-        <td>{% can_user_be_challenged user player_rank.player ladder %}</td>
-    </tr>
+    {% for player_rank in rank_list %}   
+        <tr>
+            <td>{{ player_rank.rank|ordinal }}</td>
+            <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
+            <td><span class="rank{{ player_rank.rank|ordinal }}">{{ player_rank.player.userprofile.handle }}</span></td>
+            <td>
+                <form action="{% url 'ladder:issue_challenge' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="challenger" value="{{ current_player_rank.id }}" />
+                <input type="hidden" name="challengee" value="{{ player_rank.player.pk }}" />
+                <input type="hidden" name="ladder" value="{{ ladder.slug }}" />
+                <input type="submit" value="CHALLENGE" />
+                </form>
+            </td>
+        </tr>
     {% endfor %}
 </table>
 {% endif %}
