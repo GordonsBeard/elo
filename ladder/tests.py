@@ -46,7 +46,7 @@ class Test_Ladder_Objects(TestCase):
         self.assertEqual(self.ladder.response_timeout, '3')
 
     def test_joining_ladder(self):
-        """ Tests that joining a ladder places you in last place with an up arrow. """
+        """ Tests that joining a ladder (via join_ladder) places you in last place with an up arrow. """
         request = self.factory.get('{0}/join'.format(self.ladder.slug))
 
         for i, testUser in enumerate((self.user1, self.user2, self.user3)):
