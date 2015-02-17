@@ -2,7 +2,7 @@
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.template.defaultfilters import slugify
 from django.utils.timezone import utc
 
@@ -220,10 +220,22 @@ class Match(models.Model):
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
+def del_user_rank_adjustment(instance, sender, **kwargs):
+    if issubclass(sender, Rank):
+        # get a list of the remaining players with a larger (worse) rank
+        remainingPlayers = Rank.objects.filter(ladder = instance.ladder)
+
+        # if there are no players remaining players, we're done
+        if remainingPlayers == 0:
+            return
+
+        lowerRankedPlayers = remainingPlayers.filter(rank__gt = instance.rank)
+        if lowerRankedPlayers > 0:
+            for player in lowerRankedPlayers:
+                player.rank -= 1
+                player.save()
+
 def adjust_rank(instance, sender, **kwargs):
-    """
-    KNOWN BUGS:
-    """
     if issubclass(sender, Match):
         if not instance.winner:
             # If there isn't a winner then why are we here?
@@ -267,5 +279,8 @@ def adjust_rank(instance, sender, **kwargs):
             winner_rank.save()
             loser_rank.save()
 
-#pre_save.connect(record_prematch_ranks, sender=Match)
-post_save.connect(adjust_rank, sender=Match)
+# After updating a Match, if there is a winner, adjust relevant Ranks
+post_save.connect(adjust_rank, sender = Match)
+
+# After deleting a User's Rank, update all other Ranks up one.
+post_delete.connect(del_user_rank_adjustment, sender = Rank)
