@@ -80,3 +80,6 @@ def challenge_list(request, ladderslug, challengee):
     messages.success(request,u"Challenge issued to {0}".format(challengee_name.userprofile.handle))
   
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+
+def issue_challenge(request, ladderslug, challengee):
+    raise NotImplementedError()
