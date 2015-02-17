@@ -87,6 +87,7 @@ class Rank(models.Model):
     class Meta:
         verbose_name_plural = "Rankings"
         verbose_name = "Rank"
+        unique_together = ["rank", "ladder"]
 
     player = models.ForeignKey('auth.User')
     rank = models.IntegerField()

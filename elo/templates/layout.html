@@ -14,7 +14,7 @@
     <body>
         <div id="topper">
             <span class="title"><a href="/">ELO</a> - Electronic Ladder Organizer</span>
-            {% if user.is_authenticated %}<p>Logged in as: {{ user.username }}</a> (<a href="/logout">logout</a>){% else %}<a href="/openid/login">Log In</a>{% endif %}
+            {% if user.is_authenticated %}<p>Logged in as: {{ user.username }} (<a href="/logout">logout</a>){% else %}<a href="/openid/login">Log In</a>{% endif %}
         </div>
 
 
