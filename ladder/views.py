@@ -1,5 +1,7 @@
+from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 
@@ -24,13 +26,13 @@ def index(request, ladderslug, message = None):
 
     match_list = Match.objects.filter(ladder = ladder_requested).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
-    return render_to_response('single_ladder_listing.html', {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder_requested, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges, 'message':message}, context_instance=RequestContext(request))
+    return render_to_response('single_ladder_listing.html', {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder_requested, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}, context_instance=RequestContext(request))
 
 def join_ladder(request, ladderslug):
     ladder_requested = Ladder.objects.get(slug = ladderslug)
 
     if not request.user.is_authenticated():
-        message = u"Log in before trying to join a ladder!"
+        messages.error(request, u"Log in before trying to join a ladder!")
 
         return index(request, ladderslug, message)
 
@@ -38,22 +40,24 @@ def join_ladder(request, ladderslug):
 
     try:
         player_rank = Rank.objects.get(player = request.user, ladder=ladder_requested)
-        message = u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count())
+        messages.error(request, u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count()))
+
     except ObjectDoesNotExist:
         new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder_requested)
         new_rank.save()
         rank_list = Rank.objects.filter(ladder = ladder_requested)
-        message = u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count())
+        messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
 
-    return index(request, ladderslug, message)
+    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+
 
 def leave_ladder(request, ladderslug, **kwargs):
     ladder_requested = Ladder.objects.get(slug = ladderslug)
 
     if not request.user.is_authenticated():
-        message = u"Log in before trying to join a ladder!"
+        messages.error(request, u"Log in before trying to join a ladder!")
 
-        return index(request, ladderslug, message)
+        return index(request, ladderslug)
 
     rank_list = Rank.objects.filter(ladder = ladder_requested)
 
@@ -61,19 +65,18 @@ def leave_ladder(request, ladderslug, **kwargs):
         player_rank = Rank.objects.get(player = request.user, ladder = ladder_requested)
         player_rank.delete()
 
-        message = u"You have left this ladder. Everyone gets a free promotion!"
+        messages.success(request, u"You have left this ladder. Everyone gets a free promotion!")
     except ObjectDoesNotExist:
-        message = u"You're not even on this ladder dumdum."
+        messages.error(request, u"You're not even on this ladder dumdum.")
 
-    return index(request, ladderslug, message)
+    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
 def challenge_list(request, ladderslug, challengee):
     if not request.user.is_authenticated():
-        message = u"Log in before trying to issue a challenge!"
-
-        return index(request, ladderslug, message)
-
+        messages.error(request, u"Log in before trying to issue a challenge!")
+        return index(request, ladderslug)
+    ladder_requested = Ladder.objects.get(slug = ladderslug)
     challengee_name = User.objects.get(id = challengee)
-    message = u"Challenge issued to {0}".format(challengee_name.userprofile.handle)
+    messages.success(request,u"Challenge issued to {0}".format(challengee_name.userprofile.handle))
 
-    return render(request, 'single_ladder_listing.html', {'ladderslug': ladderslug, 'message': message})
+    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))

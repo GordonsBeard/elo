@@ -1,6 +1,7 @@
 import json, urllib
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login as auth_login
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
@@ -104,7 +105,6 @@ def login(request):
     up.realname=realname
 
     up.save()
-
 
     # Stole these lines from inside the openid_auth files. idk why now
     # PROB. IMPORTANT THO

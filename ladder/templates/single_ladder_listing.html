@@ -14,7 +14,11 @@
 <br>
 {% if user.is_authenticated and join_link %}<a href="{{ ladder.get_absolute_url }}/join">Join this Ladder!</a>{% endif %}
 {% if user.is_authenticated and not join_link %}<a href="{{ ladder.get_absolute_url }}/leave">Leave this Ladder!</a>{% endif %}
-<p class="message">{% if message %}{{ message }}{% endif %}</p>
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
 {% if rank_list %}
 {% if not join_link and current_player_rank %}<p>Your current rank on the ladder is: {{ current_player_rank.rank|ordinal }}</p>{% endif %}
 <hr>
