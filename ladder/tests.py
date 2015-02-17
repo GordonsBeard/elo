@@ -26,7 +26,7 @@ class Test_Game_Objects(TestCase):
 class Test_Ladder_Objects(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        
+
         # users
         self.user1 = User.objects.create_user(username='TestUser 1', email='test1@test.com',  password='test')
         self.user2 = User.objects.create_user(username='TestUser 2', email='test2@test.com',  password='test')
@@ -51,7 +51,7 @@ class Test_Ladder_Objects(TestCase):
         self.assertEqual(self.ladder.response_timeout, '3')
 
     def test_joining_ladder(self):
-        """ Tests that joining a ladder places you in last place with an up arrow. """
+        """ Tests that joining a ladder (via join_ladder) places you in last place with an up arrow. """
         # FallbackStorage is needed to deal with a django bug
         request = self.factory.get('{0}/join'.format(self.ladder.slug))
         setattr(request, 'session', 'session')
