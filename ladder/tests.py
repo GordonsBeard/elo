@@ -1,7 +1,12 @@
+import django
+
 from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import TestCase, RequestFactory
 from ladder.models import Challenge, Ladder, Game, Rank, Match
 from ladder.views import join_ladder, leave_ladder
+
+django.setup()
 
 ## Tests to Implement:
 # User should not be able to issue challenge with an open challenge
@@ -21,7 +26,7 @@ class Test_Game_Objects(TestCase):
 class Test_Ladder_Objects(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-
+        
         # users
         self.user1 = User.objects.create_user(username='TestUser 1', email='test1@test.com',  password='test')
         self.user2 = User.objects.create_user(username='TestUser 2', email='test2@test.com',  password='test')
@@ -47,7 +52,11 @@ class Test_Ladder_Objects(TestCase):
 
     def test_joining_ladder(self):
         """ Tests that joining a ladder places you in last place with an up arrow. """
+        # FallbackStorage is needed to deal with a django bug
         request = self.factory.get('{0}/join'.format(self.ladder.slug))
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
 
         for i, testUser in enumerate((self.user1, self.user2, self.user3)):
             # user joins the ladder
@@ -58,14 +67,18 @@ class Test_Ladder_Objects(TestCase):
             # check the rank after hitting join_ladder
             testRank = Rank.objects.get(ladder = self.ladder, player = testUser)
 
-            self.assertEqual(response.status_code, 200)     # check for 200 status
+            self.assertEqual(response.status_code, 302)     # check for 302 status (redirect)
             self.assertEqual(players_in_ladder, i + 1)      # should have n player(s)
             self.assertEqual(testRank.arrow, '0')           # should have an up arrow
             self.assertEqual(testRank.rank, i + 1)          # should have a rank of n
 
     def test_leaving_ladder(self):
         """ Tests that leaving a ladder removes player completely, moves everyone up a rank. """
+        # FallbackStorage is needed to deal with a django bug
         request = self.factory.get('{0}/join'.format(self.ladder.slug))
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
 
         # ranks for ladder
         # user1:user2:user3 :: 1st:2nd:3rd

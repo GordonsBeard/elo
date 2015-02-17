@@ -56,7 +56,6 @@
     <Content Include="elo\templates\home.html" />
     <Content Include="elo\templates\layout.html" />
     <Content Include="ladder\templates\challenge.html" />
-    <Content Include="ladder\templates\joined_ladder.html" />
     <Content Include="ladder\templates\single_ladder_listing.html" />
     <Content Include="LICENSE" />
     <Content Include="README.md" />

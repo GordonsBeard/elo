@@ -47,7 +47,7 @@ def join_ladder(request, ladderslug):
         new_rank.save()
         rank_list = Rank.objects.filter(ladder = ladder_requested)
         messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
-
+    
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
 
@@ -68,7 +68,7 @@ def leave_ladder(request, ladderslug, **kwargs):
         messages.success(request, u"You have left this ladder. Everyone gets a free promotion!")
     except ObjectDoesNotExist:
         messages.error(request, u"You're not even on this ladder dumdum.")
-
+  
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
 def challenge_list(request, ladderslug, challengee):
@@ -78,5 +78,5 @@ def challenge_list(request, ladderslug, challengee):
     ladder_requested = Ladder.objects.get(slug = ladderslug)
     challengee_name = User.objects.get(id = challengee)
     messages.success(request,u"Challenge issued to {0}".format(challengee_name.userprofile.handle))
-
+  
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
