@@ -1,11 +1,11 @@
 import django
-
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.test import TestCase, RequestFactory
+from django.test import Client, TestCase, RequestFactory
 from ladder.models import Challenge, Ladder, Game, Rank, Match
-from ladder.views import join_ladder, leave_ladder
+from ladder.views import join_ladder, leave_ladder, issue_challenge
 
+# Needed for tests to run in VS
 django.setup()
 
 ## Tests to Implement:
@@ -125,16 +125,39 @@ class Test_Challenge_Objects(TestCase):
         self.factory = RequestFactory()
 
         # users
-        self.challenger = User.objects.create_user(username='TestChallenger', email='challenger@test.com',  password='test')
-        self.challengee = User.objects.create_user(username='TestChallengee', email='challengee@test.com',  password='test')
+        self.user1 = User.objects.create_user(username='TestChallenger', email='user1@test.com',  password='test')
+        self.user2 = User.objects.create_user(username='TestChallengee', email='user2@test.com',  password='test')
 
         # game and ladder
         self.game = Game.objects.create(name = "Test Game", abv = "tg")
-        ladder = Ladder.objects.create(owner = self.challenger, game = self.game)
+        self.ladder = Ladder.objects.create(owner = self.user1, game = self.game)
 
-    def test_challenge_creation(self):
-        """ Tests challenge is created with defaults. """
-        raise NotImplementedError  
+        # ranks
+        self.user1rank = Rank.objects.create(player = self.user1, rank = 1, arrow = '0', ladder = self.ladder)
+        self.user2rank = Rank.objects.create(player = self.user2, rank = 2, arrow = '0', ladder = self.ladder)
+
+    def test_issue_challenge(self):
+        """ Tests that a challenge is issued to the correct player/ladder """
+        c = Client()
+        
+        # FallbackStorage is needed to deal with a django bug
+        request = self.factory.get('{0}/join'.format(self.ladder.slug))
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        # user1 and user2 are on the ladder.
+        # user2 issues a challenge request to user1
+        request.user = self.user2
+        response = c.post('/l/challenge', { 'challenger':self.user1rank.id, 'challengee':self.user2rank.player.pk, 'ladder': self.ladder.slug })
+
+        self.assertEqual(response.status_code, 200)
+
+        print response.content
+
+    #def test_challenge_creation(self):
+    #    """ Tests challenge is created with defaults. """
+    #    raise NotImplementedError  
     
     #def test_challenge_accepted(self):
     #    """ Tests that accepting a challenge will create matching Match object. """

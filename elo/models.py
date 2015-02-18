@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
@@ -20,3 +21,5 @@ class UserProfile(models.Model):
 def create_user_profile(sender, instance, created, **kw):
     if created:
         UserProfile.objects.create(user=instance)
+
+post_save.connect(create_user_profile, sender=User)
