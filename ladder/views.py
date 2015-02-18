@@ -5,30 +5,66 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 
+from itertools import chain
+
 from ladder.models import Rank, Match, Ladder, Challenge
 
+def single_ladder_details(request, ladder):
+    """Retrieve info on a single ladder."""
 
-def index(request, ladderslug, message = None):
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
-    rank_list = Rank.objects.filter(ladder = ladder_requested).order_by('rank')
-
+    rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')
+    
     if request.user.is_authenticated():
-        """ This is the magic that will happen when a user is logged in. """
         join_link = True if request.user.pk not in [key.player.pk for key in rank_list] else None
         try:
-            current_player_rank = Rank.objects.get(player = request.user, ladder = ladder_requested)
+            current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
         except ObjectDoesNotExist:
             current_player_rank = None
     else:
-        """ Otherwise. """
         current_player_rank = None
         join_link = False
 
-    match_list = Match.objects.filter(ladder = ladder_requested).order_by('-date_complete')
+    match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
-    return render_to_response('single_ladder_listing.html', {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder_requested, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}, context_instance=RequestContext(request))
+    return {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
+
+def list_all_ladders(request):
+    match_list = Match.objects.all().order_by('-date_complete')
+    rank_list = Rank.objects.all()
+    ladder_list = Ladder.objects.all()
+    try:
+        challenger_list = Challenge.objects.filter(match__challenger = request.user, accepted=False)
+    except Exception, e:
+        challenger_list = []
+    try:
+        challengee_list = Challenge.objects.filter(match__challengee = request.user, accepted=False)
+    except Exception, e:
+        challengee_list = []
+    your_challenges = list(chain(challenger_list, challengee_list))
+    return {'match_list':match_list, 'rank_list':rank_list, 'ladder_list':ladder_list, 'your_challenges':your_challenges}
+
+def index(request, ladderslug = None):
+    """Display a list of all ladders, or just one ladder."""
+    # Single ladder was requested via GET or directly via URL
+    if request.GET != {} or ladderslug:
+        print "\nrequest.GET\t{0}\nladderslug\t{1}\n".format(request.GET, ladderslug)
+        get_slug = ladderslug if ladderslug else request.GET['ladderslug']
+        ladder = Ladder.objects.get(slug = get_slug)
+        single_ladder_info = single_ladder_details(request, ladder)
+        return render_to_response('single_ladder_listing.html', single_ladder_info, context_instance=RequestContext(request))
+
+    # Mysterie ????
+    elif request.method == 'POST':
+        raise NotImplementedError("How are you POSTing? Why? Stop it please.")
+    
+    # Get a list of all ladders
+    else:
+        all_ladders = list_all_ladders(request)
+        return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
+
 
 def join_ladder(request, ladderslug):
+    # TODO: Confirm joining ladder
     ladder_requested = Ladder.objects.get(slug = ladderslug)
 
     if not request.user.is_authenticated():
@@ -52,6 +88,7 @@ def join_ladder(request, ladderslug):
 
 
 def leave_ladder(request, ladderslug, **kwargs):
+    # TODO: Confirm leaving ladder
     ladder_requested = Ladder.objects.get(slug = ladderslug)
 
     if not request.user.is_authenticated():
@@ -71,21 +108,15 @@ def leave_ladder(request, ladderslug, **kwargs):
   
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
-def challenge_list(request, ladderslug, challengee):
-    if not request.user.is_authenticated():
-        messages.error(request, u"Log in before trying to issue a challenge!")
-        return index(request, ladderslug)
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
-    challengee_name = User.objects.get(id = challengee)
-    messages.success(request,u"Challenge issued to {0}".format(challengee_name.userprofile.handle))
-  
-    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
-
 def issue_challenge(request):
-    challengee_id = request.POST['challengee']
+    # TODO: if POST: confirm/issue challenge
+    # TODO: otherwi: show a list of people you can challenge
 
-    challengee = User.objects.get(pk=challengee_id)
+    # unpack post
+    challengee_id = request.POST['challengee']
     ladder_slug = request.POST['ladder']
+    challengee = User.objects.get(pk = challengee_id)
+    
 
     ladder = Ladder.objects.get(slug=ladder_slug)
 

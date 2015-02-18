@@ -36,7 +36,7 @@
             <td>
                 <form action="{% url 'ladder:issue_challenge' %}" method="POST">
                 {% csrf_token %}
-                <input type="hidden" name="challenger" value="{{ current_player_rank.id }}" />
+                <input type="hidden" name="challenger" value="{{ user.pk }}" />
                 <input type="hidden" name="challengee" value="{{ player_rank.player.pk }}" />
                 <input type="hidden" name="ladder" value="{{ ladder.slug }}" />
                 <input type="submit" value="CHALLENGE" />
