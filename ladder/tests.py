@@ -120,37 +120,37 @@ class Test_Ladder_Objects(TestCase):
         self.assertEqual(testRank3.rank, 1)
 
 ## Challenges
-#class Test_Challenge_Objects(TestCase):
-#    def setUp(self):
-#        self.factory = RequestFactory()
+class Test_Challenge_Objects(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
 
-#        # users
-#        self.challenger = User.objects.create_user(username='TestChallenger', email='challenger@test.com',  password='test')
-#        self.challengee = User.objects.create_user(username='TestChallengee', email='challengee@test.com',  password='test')
+        # users
+        self.challenger = User.objects.create_user(username='TestChallenger', email='challenger@test.com',  password='test')
+        self.challengee = User.objects.create_user(username='TestChallengee', email='challengee@test.com',  password='test')
 
-#        # game and ladder
-#        self.game = Game.objects.create(name = "Test Game", abv = "tg")
-#        ladder = Ladder.objects.create(owner = self.challenger, game = self.game)
+        # game and ladder
+        self.game = Game.objects.create(name = "Test Game", abv = "tg")
+        ladder = Ladder.objects.create(owner = self.challenger, game = self.game)
 
-#    def test_challenge_creation(self):
-#        """ Tests challenge is created with defaults. """
-#        raise NotImplementedError  
+    def test_challenge_creation(self):
+        """ Tests challenge is created with defaults. """
+        raise NotImplementedError  
     
-#    def test_challenge_accepted(self):
-#        """ Tests that accepting a challenge will create matching Match object. """
-#        raise NotImplementedError  
+    #def test_challenge_accepted(self):
+    #    """ Tests that accepting a challenge will create matching Match object. """
+    #    raise NotImplementedError  
     
-#    def test_challenge_forfeit(self):
-#        """ Tests declining a challenge, resulting in a loss. """
-#        raise NotImplementedError  
+    #def test_challenge_forfeit(self):
+    #    """ Tests declining a challenge, resulting in a loss. """
+    #    raise NotImplementedError  
 
-#    def test_challenge_postpone(self):
-#        """ Tests postponing a match, adding more time to the request timeout. """
-#        raise NotImplementedError  
+    #def test_challenge_postpone(self):
+    #    """ Tests postponing a match, adding more time to the request timeout. """
+    #    raise NotImplementedError  
     
-#    def test_challenge_complete(self):
-#        """ Tests completing a challenge, updating linked Match object. """
-#        raise NotImplementedError  
+    #def test_challenge_complete(self):
+    #    """ Tests completing a challenge, updating linked Match object. """
+    #    raise NotImplementedError  
 
 ## Match
 #class Test_Match_Objects(TestCase):
