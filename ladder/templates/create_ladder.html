@@ -1,0 +1,13 @@
+﻿{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% block head %}{% endblock head %}
+
+
+{% block content %}
+<form action="/l/create" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Submit" />
+</form>
+{% endblock content %}

@@ -5,14 +5,19 @@
 
 {% block head %}{% endblock head %}
 
-
 {% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
 
 <h2>Ladders:</h2>
 <ul>
 {% for ladder in ladder_list %}
 <li><a href="{{ ladder.get_absolute_url }}">{{ ladder }}</a> ({{ ladder.game.abv }})</li>
 {% endfor %}
+<li><a href="/l/create">+ Create a ladder</a></li>
 </ul>
 
 {% if your_challenges %}

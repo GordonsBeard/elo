@@ -4,10 +4,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
-
+from django import forms
 from itertools import chain
 
-from ladder.models import Rank, Match, Ladder, Challenge
+from ladder.models import Rank, Match, Ladder, Challenge, Game
 
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
@@ -29,28 +29,39 @@ def single_ladder_details(request, ladder):
     return {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
+    """Retrieve info on all the ladders."""
+
+    # List of all ladders includes match and rank info as well.
     match_list = Match.objects.all().order_by('-date_complete')
     rank_list = Rank.objects.all()
     ladder_list = Ladder.objects.all()
-    try:
-        challenger_list = Challenge.objects.filter(match__challenger = request.user, accepted=False)
-    except Exception, e:
-        challenger_list = []
-    try:
-        challengee_list = Challenge.objects.filter(match__challengee = request.user, accepted=False)
-    except Exception, e:
-        challengee_list = []
-    your_challenges = list(chain(challenger_list, challengee_list))
+
+    if request.user.is_authenticated():
+        # Check for open challenges
+        try:
+            challenger_list = Challenge.objects.filter(match__challenger = request.user, accepted=False)
+        except Exception, e:
+            challenger_list = []
+        try:
+            challengee_list = Challenge.objects.filter(match__challengee = request.user, accepted=False)
+        except Exception, e:
+            challengee_list = []
+
+        # Check for logged-in users' open challenges
+        your_challenges = list(chain(challenger_list, challengee_list))
+    else:
+        your_challenges = []
+
     return {'match_list':match_list, 'rank_list':rank_list, 'ladder_list':ladder_list, 'your_challenges':your_challenges}
 
 def index(request, ladderslug = None):
     """Display a list of all ladders, or just one ladder."""
     # Single ladder was requested via GET or directly via URL
     if request.GET != {} or ladderslug:
-        print "\nrequest.GET\t{0}\nladderslug\t{1}\n".format(request.GET, ladderslug)
         get_slug = ladderslug if ladderslug else request.GET['ladderslug']
         ladder = Ladder.objects.get(slug = get_slug)
         single_ladder_info = single_ladder_details(request, ladder)
+
         return render_to_response('single_ladder_listing.html', single_ladder_info, context_instance=RequestContext(request))
 
     # Mysterie ????
@@ -122,3 +133,25 @@ def issue_challenge(request):
 
     messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
     return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
+
+def create_ladder(request):
+    class CreateLadderForm(forms.ModelForm):
+        class Meta:
+            model = Ladder
+            fields = ['name', 'game', 'owner']
+            widgets = {'owner': forms.HiddenInput()}
+
+    if request.method == 'POST':
+        form = CreateLadderForm(request.POST)
+
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            game = form.cleaned_data['game']
+            owner = form.cleaned_data['owner']
+
+            newLadder = Ladder.objects.create(name = name, game = game, owner = owner)
+            messages.success(request, "Ladder created: {0}".format(newLadder.name))
+            return HttpResponseRedirect('/')
+    else:
+        form = CreateLadderForm(initial={'owner': request.user.pk})
+    return render_to_response("create_ladder.html", {'form': form}, context_instance=RequestContext(request))

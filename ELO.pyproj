@@ -55,6 +55,7 @@
     <Content Include="elo\static\css\tags.css" />
     <Content Include="elo\templates\layout.html" />
     <Content Include="ladder\templates\challenge.html" />
+    <Content Include="ladder\templates\create_ladder.html" />
     <Content Include="ladder\templates\ladder_home.html" />
     <Content Include="ladder\templates\single_ladder_listing.html" />
     <Content Include="LICENSE" />
