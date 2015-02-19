@@ -10,8 +10,6 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 
-import time
-
 def _get_valid_targets(user, user_rank, allTargets, ladder):
     """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
 
