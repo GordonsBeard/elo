@@ -3,6 +3,15 @@ from django.contrib import admin
 from elo.models import UserProfile
 from ladder.models import Match, Rank, Game, Challenge, Ladder
 
+class RankInline( admin.TabularInline ) :
+    model = Rank
+    verbose_name_plural = "rankings"
+    ordering = ('rank',)
+
+class LadderAdmin( admin.ModelAdmin ) :
+    inlines = [RankInline]
+    list_display = ('__unicode__','created','end_date','players')
+
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('date_challenged', 'ladder', 'challenger_name', 'challengee_name', 'winner_name')
     list_filter = ['date_challenged']
@@ -35,5 +44,5 @@ class GameAdmin(admin.ModelAdmin):
 admin.site.register(Match, MatchAdmin)
 admin.site.register(Rank, RankAdmin)
 admin.site.register(Game, GameAdmin)
-admin.site.register(Ladder)
+admin.site.register(Ladder, LadderAdmin)
 admin.site.register(Challenge)
