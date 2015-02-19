@@ -1,6 +1,7 @@
-from django.contrib import messages
+﻿from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
@@ -9,24 +10,78 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 
+def _get_valid_targets(user, user_rank, allTargets, ladder):
+    """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
+
+        You are allowed to challenge if:
+            - User is on the ladder. (checked beforehand)
+            - User has no open challenges in this ladder.
+            - User's (/w ▲) target is within current rank - UPARROW range.
+            - User's (/w ▼) target is within current rank + DNARROW range.
+            - User has not challenged target since TIMEOUT time has passed. *NOT IMPLEMENTED
+    """
+    # list of ranks player can challenge
+    challengables = []
+
+    # user has no open challenges in this ladder
+    open_challenges = Challenge.objects.filter(Q(challengee = user) | Q(challenger = user)).filter(ladder = ladder).count()
+    if  open_challenges > 0: 
+        print "Open challenges"
+        return []
+
+    # get user arrow
+    userUpArrow = user_rank.arrow
+
+    # get the constraints for this ladder
+    UPARROW = ladder.up_arrow
+    DNARROW = ladder.down_arrow
+    # TIMEOUT = ladder.challenge_cooldown
+
+    for target_rank in Rank.objects.filter(ladder = ladder).order_by('rank'):
+
+        if userUpArrow == '0' and target_rank.rank != user_rank.rank and target_rank.rank < user_rank.rank:
+            print target_rank.player.username
+            print target_rank.rank
+            if user_rank.rank - UPARROW < target_rank.rank:
+                challengables.append(target_rank.rank)
+
+        elif userUpArrow == '1' and target_rank.rank != user_rank.rank and target_rank.rank > user_rank.rank:
+            print "Down arrow"
+
+            if target_rank.rank + DNARROW > user_rank.rank:
+                challengables.append(target_rank.rank)
+
+    return challengables
+
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
-
+    
+    # get the raw ranking list
     rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')
     
+
+    # if user is logged in
     if request.user.is_authenticated():
+        # set a flag to allow them to join the ladder
         join_link = True if request.user.pk not in [key.player.pk for key in rank_list] else None
+        # if there is a ranking, get a list of those you can challenge.
+        
         try:
             current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
+            challengables = _get_valid_targets(request.user, current_player_rank, rank_list, ladder)
+            messages.debug(request, "Challengable ranks: {0}".format(challengables))
+            print "Challengable ranks: {0}".format(challengables)
         except ObjectDoesNotExist:
             current_player_rank = None
+            challengables = []
     else:
         current_player_rank = None
         join_link = False
+        challengables = []
 
     match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
-    return {'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
+    return {'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
     """Retrieve info on all the ladders."""

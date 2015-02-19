@@ -12,8 +12,14 @@
 <h4><em>{{ ladder.game.name }}</em></h4>
 <p>{{ ladder.description }}</p>
 <br>
-{% if user.is_authenticated and join_link %}<a href="{{ ladder.get_absolute_url }}/join">Join this Ladder!</a>{% endif %}
-{% if user.is_authenticated and not join_link %}<a href="{{ ladder.get_absolute_url }}/leave">Leave this Ladder!</a>{% endif %}
+{% if user.is_authenticated %}
+{% if ladder.signups %}
+    {% if join_link %}<a href="{{ ladder.get_absolute_url }}/join">Join this Ladder!</a>{% endif %}
+    {% if not join_link %}<a href="{{ ladder.get_absolute_url }}/leave">Leave this Ladder!</a>{% endif %}
+{% else %}
+    <em>Signups for this ladder are currently closed.</em>
+{% endif %}
+{% endif %}
 <ul class="message">
     {% for message in messages %}
     <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
@@ -32,8 +38,9 @@
         <tr>
             <td>{{ player_rank.rank|ordinal }}</td>
             <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
-            <td><span class="rank{{ player_rank.rank|ordinal }}">{{ player_rank.player.userprofile.handle }}</span></td>
+            <td><span class="rank{{ player_rank.rank|ordinal }}"><img src="{{ player_rank.player.userprofile.avatar }}" /> {{ player_rank.player.userprofile.handle }}</span></td>
             <td>
+                {% if player_rank.rank in challengables %}
                 <form action="{% url 'ladder:issue_challenge' %}" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="challenger" value="{{ user.pk }}" />
@@ -41,6 +48,7 @@
                 <input type="hidden" name="ladder" value="{{ ladder.slug }}" />
                 <input type="submit" value="CHALLENGE" />
                 </form>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
