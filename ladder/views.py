@@ -22,7 +22,6 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
             - User's (/w ▼) target is within current rank + DNARROW range.
             - User has not challenged target since TIMEOUT time has passed. *NOT IMPLEMENTED
     """
-    start = time.time()
     # list of ranks player can challenge
     challengables = []
 
@@ -52,7 +51,6 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     for target_rank in Rank.objects.filter(ladder = ladder,rank__range = r_range) :
         challengables.append(target_rank.rank)
 
-    print "Executing _get_valid_targets took {} seconds".format( time.time() - start )
     return challengables
 
 def single_ladder_details(request, ladder):
