@@ -20,3 +20,5 @@ Setup/Notes
 **dbase/**: Create this (empty) folder in the base directory.
 
 **elo/settings.py**: Add a secret key and change the `CSRF_COOKIE_DOMAIN` to `127.0.0.1`
+
+You need a superuser before you can log in via Steam/OpenID: ``django-admin.py createsuperuser``. You can then log in via steam and give that account admin properties.
