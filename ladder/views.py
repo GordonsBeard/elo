@@ -10,6 +10,8 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 
+import time
+
 def _get_valid_targets(user, user_rank, allTargets, ladder):
     """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
 
@@ -20,6 +22,7 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
             - User's (/w ▼) target is within current rank + DNARROW range.
             - User has not challenged target since TIMEOUT time has passed. *NOT IMPLEMENTED
     """
+    start = time.time()
     # list of ranks player can challenge
     challengables = []
 
@@ -29,28 +32,27 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
         print "Open challenges"
         return []
 
-    # get user arrow
-    userUpArrow = user_rank.arrow
+    # Get user's arrow and rank
+    user_arrow = user_rank.arrow
+    user_nrank = user_rank.rank
 
     # get the constraints for this ladder
-    UPARROW = ladder.up_arrow
-    DNARROW = ladder.down_arrow
-    # TIMEOUT = ladder.challenge_cooldown
+    up_distance = ladder.up_arrow
+    dn_distance = ladder.down_arrow
 
-    for target_rank in Rank.objects.filter(ladder = ladder).order_by('rank'):
+    # Get the range of ranks to search between
+    if user_arrow == '0' :
+        r_range = (user_nrank-up_distance, user_nrank-1)
+    elif user_arrow == '1' :
+        r_range = (user_nrank+1, user_nrank+dn_distance)
+    else :
+        raise ValueError( 'Rank.arrow can be either "0" (Up Arrow) or "1" (Down Arrow), but was "{}"'.format( user_arrow ) )
 
-        if userUpArrow == '0' and target_rank.rank != user_rank.rank and target_rank.rank < user_rank.rank:
-            print target_rank.player.username
-            print target_rank.rank
-            if user_rank.rank - UPARROW < target_rank.rank:
-                challengables.append(target_rank.rank)
+    # Get all ranks on the ladder within our target range
+    for target_rank in Rank.objects.filter(ladder = ladder,rank__range = r_range) :
+        challengables.append(target_rank.rank)
 
-        elif userUpArrow == '1' and target_rank.rank != user_rank.rank and target_rank.rank > user_rank.rank:
-            print "Down arrow"
-
-            if target_rank.rank + DNARROW > user_rank.rank:
-                challengables.append(target_rank.rank)
-
+    print "Executing _get_valid_targets took {} seconds".format( time.time() - start )
     return challengables
 
 def single_ladder_details(request, ladder):
