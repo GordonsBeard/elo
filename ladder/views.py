@@ -25,9 +25,6 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
 
     # user has no open challenges in this ladder
     open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)) & (Q(accepted = Challenge.STATUS_NOT_ACCEPTED) | Q(accepted = Challenge.STATUS_ACCEPTED))).filter(ladder = ladder).count()
-    if  open_challenges > 0: 
-        print "Open challenges"
-        return []
 
     # Get user's arrow and rank
     user_arrow = user_rank.arrow
@@ -68,7 +65,6 @@ def single_ladder_details(request, ladder):
             current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
             challengables = _get_valid_targets(request.user, current_player_rank, rank_list, ladder)
             messages.debug(request, "Challengable ranks: {0}".format(challengables))
-            print "Challengable ranks: {0}".format(challengables)
         except ObjectDoesNotExist:
             current_player_rank = None
             challengables = []
