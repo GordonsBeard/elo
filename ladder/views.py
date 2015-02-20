@@ -38,10 +38,10 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     dn_distance = ladder.down_arrow
 
     # Get the range of ranks to search between
-    if user_arrow == '0' :
-        r_range = (user_nrank-up_distance, user_nrank-1)
-    elif user_arrow == '1' :
-        r_range = (user_nrank+1, user_nrank+dn_distance)
+    if user_arrow == Rank.ARROW_UP :
+        r_range = (user_nrank - up_distance, user_nrank - 1)
+    elif user_arrow == Rank.ARROW_DOWN :
+        r_range = (user_nrank + 1, user_nrank + dn_distance)
     else :
         raise ValueError( 'Rank.arrow can be either "0" (Up Arrow) or "1" (Down Arrow), but was "{}"'.format( user_arrow ) )
 
@@ -177,12 +177,16 @@ def issue_challenge(request):
     # TODO: otherwi: show a list of people you can challenge
 
     # unpack post
-    challengee_id = request.POST['challengee']
-    ladder_slug = request.POST['ladder']
-    challengee = User.objects.get(pk = challengee_id)
-    
+    challengee_id   = request.POST['challengee']
+    ladder_slug     = request.POST['ladder']
 
-    ladder = Ladder.objects.get(slug=ladder_slug)
+    challenger      = request.user
+    challengee      = User.objects.get(pk = challengee_id)
+    ladder          = Ladder.objects.get(slug=ladder_slug)
+
+    # Generate a challenge
+    challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+    challenge.save()
 
     messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
     return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
