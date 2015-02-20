@@ -23,10 +23,14 @@ class Game(models.Model):
         return self.name
 
 class Ladder(models.Model):
+    PRIVACY_OPEN     = u'0'
+    PRIVACY_UNLISTED = u'1'
+    PRIVACY_PRIVATE  = u'2'
+
     PRIVACY_LEVELS = (
-        (u'0', u'Open'),
-        (u'1', u'Unlisted'),
-        (u'2', u'Private'),
+        (PRIVACY_OPEN,      u'Open'),
+        (PRIVACY_UNLISTED,  u'Unlisted'),
+        (PRIVACY_PRIVATE,   u'Private'),
     )
 
     WEEKDAYS = (
@@ -79,9 +83,12 @@ class Ladder(models.Model):
 
 
 class Rank(models.Model):
+    ARROW_UP    = u'0'
+    ARROW_DOWN  = u'1'
+
     ARROW_ICONS = (
-        (u'0', u"▲"),
-        (u'1', u"▼"),
+        (ARROW_UP,   u"▲"),
+        (ARROW_DOWN, u"▼"),
     )
 
     class Meta:
@@ -98,12 +105,20 @@ class Rank(models.Model):
         return u"{0} [{1}{2}]".format(self.player.userprofile.handle, self.rank, self.get_arrow_display())
 
 class Challenge(models.Model):
+    STATUS_NOT_ACCEPTED = u'0'
+    STATUS_ACCEPTED     = u'1'
+    STATUS_FORFEIT      = u'2'
+    STATUS_POSTPONED    = u'3'
+    STATUS_COMPLETED    = u'4'
+    STATUS_CANCELLED    = u'5'
+
     CHALLENGE_RESPONSES = (
-        (u'0',  u'Not Accepted'),
-        (u'1',  u'Accepted'),
-        (u'2',  u'Forfeit'),
-        (u'3',  u'Postponed'),
-        (u'4',  u'Completed'),
+        (STATUS_NOT_ACCEPTED,  u'Not Accepted'),
+        (STATUS_ACCEPTED,      u'Accepted'),
+        (STATUS_FORFEIT,       u'Forfeit'),
+        (STATUS_POSTPONED,     u'Postponed'),
+        (STATUS_COMPLETED,     u'Completed'),
+        (STATUS_CANCELLED,     u'Cancelled')
     )
 
     challenger = models.ForeignKey('auth.User', related_name='challenge_challenger')
@@ -158,9 +173,12 @@ class Challenge(models.Model):
         super(Challenge, self).save(*args, **kwargs)
 
 class Match(models.Model):
+    ARROW_UP    = u'0'
+    ARROW_DOWN  = u'1'
+
     ARROW_ICONS = (
-        (u'0', u"▴"),
-        (u'1', u"▾"),
+        (ARROW_UP,   u"▴"),
+        (ARROW_DOWN, u"▾"),
     )
 
     class Meta:
@@ -170,9 +188,9 @@ class Match(models.Model):
     def save(self, *args, **kwargs):
         if self.winner:
             # With the winner mark the related challenge as "Completed"
-            if self.related_challenge.accepted == '0':
+            if self.related_challenge.accepted == Challenge.STATUS_NOT_ACCEPTED:
                 # As long as the match wasn't forfeit of course.
-                self.related_challenge.accepted = '4' if not self.forfeit else '2'
+                self.related_challenge.accepted = Challenge.STATUS_COMPLETED if not self.forfeit else Challenge.STATUS_FORFEIT
                 self.related_challenge.save(*args, **kwargs)
 
             # Because there is a winner, mark the Match object as complete
@@ -190,7 +208,7 @@ class Match(models.Model):
             # If the challenger is the winner, give them the challengee's rank
             # (if higher)
             self.winner_rank = challengee_rank.rank if challenger_rank.rank > challengee_rank.rank else challenger_rank.rank
-            self.winner_rank_icon = 0
+            self.winner_rank_icon = ARROW_UP
 
         super(Match, self).save(*args, **kwargs)
 
@@ -258,15 +276,15 @@ def adjust_rank(instance, sender, **kwargs):
             # Now that we have a winner we need to give people actual ranks.
             # If they don't have one, give them the current rankings +1.
             # Challenger gets ranked higher by default because THEMS THE BREAKS
-            defaults = {'rank':rankings+1, 'arrow':'0',}
+            defaults = {'rank':rankings+1, 'arrow':Rank.ARROW_DOWN,}
             winner_rank, _created = Rank.objects.get_or_create(player=winner, ladder=ladder, defaults=defaults)
             loser_rank, _created = Rank.objects.get_or_create(player=loser, ladder=ladder, defaults=defaults)
 
             # Loser gets an up arrow if they are at the bottom of the list.
-            loser_rank.arrow = '0' if winner_rank.rank >= rankings or loser_rank.rank >= rankings else '1'
+            loser_rank.arrow = Rank.ARROW_DOWN if winner_rank.rank >= rankings or loser_rank.rank >= rankings else Rank.ARROW_UP
 
             # Winner always gets an up arrow.
-            winner_rank.arrow = '0'
+            winner_rank.arrow = Rank.ARROW_UP
 
             # If winner is lower down on the ladder than loser
             if winner_rank.rank > loser_rank.rank:
