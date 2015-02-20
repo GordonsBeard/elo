@@ -84,3 +84,4 @@ nosetests.xml
 # ELO Site files
 venv/
 dbase/
+migrations/
