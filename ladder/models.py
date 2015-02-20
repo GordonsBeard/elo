@@ -188,7 +188,7 @@ class Match(models.Model):
     def save(self, *args, **kwargs):
         if self.winner:
             # With the winner mark the related challenge as "Completed"
-            if self.related_challenge.accepted == Challenge.STATUS_NOT_ACCEPTED:
+            if self.related_challenge.accepted in (Challenge.STATUS_NOT_ACCEPTED,Challenge.STATUS_ACCEPTED):
                 # As long as the match wasn't forfeit of course.
                 self.related_challenge.accepted = Challenge.STATUS_COMPLETED if not self.forfeit else Challenge.STATUS_FORFEIT
                 self.related_challenge.save(*args, **kwargs)

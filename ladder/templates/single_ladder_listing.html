@@ -38,7 +38,7 @@
         <tr>
             <td>{{ player_rank.rank|ordinal }}</td>
             <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
-            <td><span class="rank{{ player_rank.rank|ordinal }}"><img src="{{ player_rank.player.userprofile.avatar }}" /> {{ player_rank.player.userprofile.handle }}</span></td>
+            <td><span class="rank{{ player_rank.rank|ordinal }}"><img src="{{ player_rank.player.userprofile.avatar }}" /> <a href="{% url 'user:profile' player_rank.player.username %}">{{ player_rank.player.userprofile.handle }}</a></span></td>
             <td>
                 {% if player_rank.rank in challengables %}
                 <form action="{% url 'ladder:issue_challenge' %}" method="POST">
@@ -78,12 +78,12 @@
 <tr>
     <td>{{ match.date_complete|naturaltime }}</td>
     <td><img src="{{ match.challenger.userprofile.avatar }}" /></td>
-    <td>{{ match.challenger.userprofile.handle }}{% if match.challenger_rank %} [{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]{% endif %}</td>
+    <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a>{% if match.challenger_rank %} [{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]{% endif %}</td>
     <td><strong>vs</strong></td>
     <td><img src="{{ match.challengee.userprofile.avatar }}" /></td>
-    <td>{{ match.challengee.userprofile.handle }}{% if match.challengee_rank %} [{{ match.challengee_rank }}{{ match.get_challengee_rank_icon_display }}]{% endif %}</td>
+    <td><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a>{% if match.challengee_rank %} [{{ match.challengee_rank }}{{ match.get_challengee_rank_icon_display }}]{% endif %}</td>
     <td><img src="{{ match.winner.userprofile.avatar }}" /></td>
-    <td><em>{{ match.winner.userprofile.handle }}</em>{% if match.winner_rank %} [{{ match.winner_rank }}{{ match.get_winner_rank_icon_display }}]{% endif %}</td>
+    <td><em><a href="{% url 'user:profile' match.winner.username %}">{{ match.winner.userprofile.handle }}</a></em>{% if match.winner_rank %} [{{ match.winner_rank }}{{ match.get_winner_rank_icon_display }}]{% endif %}</td>
 </tr>
 {% endif %}
 {% endfor %}

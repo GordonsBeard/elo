@@ -24,7 +24,7 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     challengables = []
 
     # user has no open challenges in this ladder
-    open_challenges = Challenge.objects.filter(Q(challengee = user) | Q(challenger = user)).filter(ladder = ladder).count()
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)) & (Q(accepted = Challenge.STATUS_NOT_ACCEPTED) | Q(accepted = Challenge.STATUS_ACCEPTED))).filter(ladder = ladder).count()
     if  open_challenges > 0: 
         print "Open challenges"
         return []
