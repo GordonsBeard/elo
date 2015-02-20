@@ -7,6 +7,7 @@ class RankInline( admin.TabularInline ) :
     model = Rank
     verbose_name_plural = "rankings"
     ordering = ('rank',)
+    fields = ('rank','player','arrow')
 
 class LadderAdmin( admin.ModelAdmin ) :
     inlines = [RankInline]
