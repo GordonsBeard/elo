@@ -55,7 +55,9 @@ class Ladder(models.Model):
         return "/l/{0}".format(self.slug)
 
     def latest_match(self):
-        matches = Match.objects.filter(ladder=self).order_by('-date_challenged').first()
+        matches = Match.objects.filter(ladder_id=self.id).order_by('-date_challenged').first()
+        if not matches :
+            return "Never"
         return matches.date_challenged
 
     def __unicode__(self):
@@ -142,7 +144,12 @@ class Challenge(models.Model):
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
 
-        if self.accepted:
+        if self.accepted == Challenge.STATUS_NOT_ACCEPTED:
+            """
+            When a new challenge is posted, send a message to the challengee informing them.
+            """
+            new_notice, created = ChallengeNotice.objects.get_or_create( user = self.challengee, challenge = self, notice = CHALLENGE_ISSUED )
+        elif self.accepted == Challenge.STATUS_ACCEPTED:
             """
             Once match is accepted, created the MATCH object and record the current stats.
             At this point we record the pre-match stats, so we need to get the players' current rank.
@@ -169,8 +176,6 @@ class Challenge(models.Model):
                         'challenger_rank': challenger_rank, 'challenger_rank_icon': challenger_arrow,
                         'challengee_rank': challengee_rank, 'challengee_rank_icon': challengee_arrow }
             new_match, created = Match.objects.get_or_create(related_challenge=self, ladder=self.ladder, defaults=defaults)
-
-        super(Challenge, self).save(*args, **kwargs)
 
 class Match(models.Model):
     ARROW_UP    = u'0'
@@ -295,12 +300,6 @@ def adjust_rank(instance, sender, **kwargs):
             winner_rank, _created = Rank.objects.get_or_create(player=winner, ladder=ladder, defaults=defaults)
             loser_rank, _created = Rank.objects.get_or_create(player=loser, ladder=ladder, defaults=defaults)
 
-            # Loser gets an up arrow if they are at the bottom of the list.
-            loser_rank.arrow = Rank.ARROW_DOWN if winner_rank.rank >= rankings or loser_rank.rank >= rankings else Rank.ARROW_UP
-
-            # Winner always gets an up arrow.
-            winner_rank.arrow = Rank.ARROW_UP
-
             # If winner is lower down on the ladder than loser
             if winner_rank.rank > loser_rank.rank:
                 old_winner_rank = winner_rank.rank
@@ -309,6 +308,12 @@ def adjust_rank(instance, sender, **kwargs):
                 # This swaps the ranks
                 winner_rank.rank = old_loser_rank
                 loser_rank.rank = old_winner_rank
+
+            # Loser gets an up arrow if they are at the bottom of the list.
+            loser_rank.arrow = Rank.ARROW_DOWN if loser_rank.rank < rankings else Rank.ARROW_UP
+
+            # Winner always gets an up arrow.
+            winner_rank.arrow = Rank.ARROW_UP
 
             winner_rank.save()
             loser_rank.save()
