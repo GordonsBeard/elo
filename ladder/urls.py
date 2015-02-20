@@ -4,7 +4,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('ladder.views',
-    url(r'^(?P<ladderslug>[-\w]+)/$',       'index'),
+    url(r'^(?P<ladderslug>[-\w]+)/$',       'index', name='detail'),
     url(r'^create$',                        'create_ladder'),
     url(r'^(?P<ladderslug>[-\w]+)/join$',   'join_ladder'),
     url(r'^(?P<ladderslug>[-\w]+)/leave$',  'leave_ladder'),

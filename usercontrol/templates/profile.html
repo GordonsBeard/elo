@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<h1><img src="{{ userp.userprofile.avatar }}" /> {{ userp.userprofile.handle }}</h1>
+<hr>
+
+<div class="profile_block" id="profile_stats">
+  <table class="table_noborder">
+    {% for key,stat in stats.items %}
+    <tr>
+      <td class="table_label">{{ key }}:</td>
+      <td class="table_stat">{{ stat }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div> <!-- profile_stats -->
+
+<div class="profile_block" id="profile_matches">
+  <h3>Recent Matches</h3>
+  <table>
+    <tr>
+      <th class="table_header">Date</th>
+      <th class="table_header">Ladder</th>
+      <th class="table_header" colspan="2">Versus</th>
+      <th class="table_header">Result</th>
+    </tr>
+    {% for match in matches %}
+    <tr>
+      <td class="table_content">{{ match.date_complete|naturaltime }}</td>
+      <td class="table_content"><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td>
+      {% if match.challenger_id == userp.id %}
+        <td class="table_content"><img src="{{ match.challengee.userprofile.avatar }}"></td>
+        <td class="table_content"><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a></td>
+      {% else %}
+        <td class="table_content"><img src="{{ match.challenger.userprofile.avatar }}"></td>
+        <td class="table_content"><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a></td>
+      {% endif %}
+      <td class="table_content">{% if match.winner_id == userp.id %}<span class="match_win">Won</span>{% else %}<span class="match_lose">Lost</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div> <!-- profile_matches -->
+
+<div class="profile_block" id="profile_ladders">
+  <h3>Active Ladders</h3>
+  <table>
+    <tr>
+      <th class="table_header">Ladder</th>
+      <th class="table_header">Rank</th>
+      <th class="table_header">Last Activity</th>
+    </tr>
+    {% for rank,last in ranks %}
+    <tr>
+      <td class="table_content"><a href="{% url 'ladder:detail' rank.ladder.slug %}">{{ rank.ladder }}</a></td>
+      <td class="table_content">{{ rank.get_arrow_display }}{{ rank.rank }} / {{ rank.ladder.players }}</td>
+      <td class="table_content">{{ last|naturaltime }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div> <!-- profile_ladders -->
+
+{% endblock content %}

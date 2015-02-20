@@ -24,32 +24,30 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     challengables = []
 
     # user has no open challenges in this ladder
-    open_challenges = Challenge.objects.filter(Q(challengee = user) | Q(challenger = user)).filter(ladder = ladder).count()
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)) & (Q(accepted = Challenge.STATUS_NOT_ACCEPTED) | Q(accepted = Challenge.STATUS_ACCEPTED))).filter(ladder = ladder).count()
     if  open_challenges > 0: 
         print "Open challenges"
         return []
 
-    # get user arrow
-    userUpArrow = user_rank.arrow
+    # Get user's arrow and rank
+    user_arrow = user_rank.arrow
+    user_nrank = user_rank.rank
 
     # get the constraints for this ladder
-    UPARROW = ladder.up_arrow
-    DNARROW = ladder.down_arrow
-    # TIMEOUT = ladder.challenge_cooldown
+    up_distance = ladder.up_arrow
+    dn_distance = ladder.down_arrow
 
-    for target_rank in Rank.objects.filter(ladder = ladder).order_by('rank'):
+    # Get the range of ranks to search between
+    if user_arrow == Rank.ARROW_UP :
+        r_range = (user_nrank - up_distance, user_nrank - 1)
+    elif user_arrow == Rank.ARROW_DOWN :
+        r_range = (user_nrank + 1, user_nrank + dn_distance)
+    else :
+        raise ValueError( 'Rank.arrow can be either "0" (Up Arrow) or "1" (Down Arrow), but was "{}"'.format( user_arrow ) )
 
-        if userUpArrow == '0' and target_rank.rank != user_rank.rank and target_rank.rank < user_rank.rank:
-            print target_rank.player.username
-            print target_rank.rank
-            if user_rank.rank - UPARROW < target_rank.rank:
-                challengables.append(target_rank.rank)
-
-        elif userUpArrow == '1' and target_rank.rank != user_rank.rank and target_rank.rank > user_rank.rank:
-            print "Down arrow"
-
-            if target_rank.rank + DNARROW > user_rank.rank:
-                challengables.append(target_rank.rank)
+    # Get all ranks on the ladder within our target range
+    for target_rank in Rank.objects.filter(ladder = ladder,rank__range = r_range) :
+        challengables.append(target_rank.rank)
 
     return challengables
 
@@ -179,12 +177,16 @@ def issue_challenge(request):
     # TODO: otherwi: show a list of people you can challenge
 
     # unpack post
-    challengee_id = request.POST['challengee']
-    ladder_slug = request.POST['ladder']
-    challengee = User.objects.get(pk = challengee_id)
-    
+    challengee_id   = request.POST['challengee']
+    ladder_slug     = request.POST['ladder']
 
-    ladder = Ladder.objects.get(slug=ladder_slug)
+    challenger      = request.user
+    challengee      = User.objects.get(pk = challengee_id)
+    ladder          = Ladder.objects.get(slug=ladder_slug)
+
+    # Generate a challenge
+    challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+    challenge.save()
 
     messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
     return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))

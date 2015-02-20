@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'super secret key'
+SECRET_KEY = 'e54t54355s4di68@bdbajegui458&&5d4s/b38*54'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,6 +44,7 @@ INSTALLED_APPS = (
 
     'ladder',
     'elo',
+    'usercontrol',
 )
 
 MIDDLEWARE_CLASSES = (

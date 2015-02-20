@@ -51,3 +51,12 @@ td { padding: .25em; }
 td .rank1st{ font-weight: bold;  font-size: 18px;}
 td .rank2nd{ font-weight: bold;  font-size: 16px;}
 td .rank3rd{ font-weight: bold; font-size: 14px;}
+
+label {
+    display: block;
+    margin-bottom: .5em;
+}
+
+input {
+    margin-bottom: .75em;
+}
