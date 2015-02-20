@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<h1>Inbox</h1>
+
+<ul>
+  <li><a href="{% url 'user:message_challenges' %}">{{ num_challenges }} Open Challenges</a></li>
+  <li><a href="{% url 'user:message_matches' %}">{{ num_matches }} Open Matches</a></li>
+</ul>
+
+{% endblock content %}

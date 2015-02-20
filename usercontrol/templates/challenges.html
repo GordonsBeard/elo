@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<h1>Challenges</h1>
+<ul>
+{% if challenges %}
+{% for challenge in challenges %}
+  <li><a href="{% url 'user:profile' challenge.challenger.username %}">{{ challenge.challenger.userprofile.handle }}</a> has challenged you to a match! Via <a href="{% url 'ladder:detail' challenge.ladder.slug %}">{{ challenge.ladder }}</a>
+    <form style="display:inline-block;" action="{% url 'user:message_challenges' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="note_id" value="{{ challenge.pk }}">
+      <input type="hidden" name="action" value="accept_challenge">
+      <input type="submit" value="Accept">
+    </form>
+    <form style="display:inline-block;" action="{% url 'user:message_challenges' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="note_id" value="{{ challenge.pk }}">
+      <input type="hidden" name="action" value="decline_challenge">
+      <input type="submit" value="Forfeit">
+    </form>
+  </li>
+{% endfor %}
+{% else %}
+  <li>No new challenges.</li>
+{% endif %}
+</ul>
+
+
+{% endblock content %}
