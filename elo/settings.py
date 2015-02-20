@@ -94,7 +94,7 @@ STATIC_URL = '/static/'
 #STATIC_ROOT = '/home/gordon/public/laddr.org/elo/static/'
 
 # Steam API key
-STEAM_API_KEY = '87B1E6B2C33AA7850637787CF4BAC545'
+STEAM_API_KEY = 'super secret steam key'
 
 # Authentification for OpenID
 AUTHENTICATION_BACKENDS = (
