@@ -144,12 +144,7 @@ class Challenge(models.Model):
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
 
-        if self.accepted == Challenge.STATUS_NOT_ACCEPTED:
-            """
-            When a new challenge is posted, send a message to the challengee informing them.
-            """
-            new_notice, created = ChallengeNotice.objects.get_or_create( user = self.challengee, challenge = self, notice = CHALLENGE_ISSUED )
-        elif self.accepted == Challenge.STATUS_ACCEPTED:
+        if self.accepted == Challenge.STATUS_ACCEPTED:
             """
             Once match is accepted, created the MATCH object and record the current stats.
             At this point we record the pre-match stats, so we need to get the players' current rank.
