@@ -28,6 +28,9 @@
   <ItemGroup>
     <Compile Include="elo\models.py" />
     <Compile Include="elo\settings.py" />
+    <Compile Include="elo\tests.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="elo\urls.py" />
     <Compile Include="elo\views.py" />
     <Compile Include="elo\wsgi.py" />

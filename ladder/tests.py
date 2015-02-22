@@ -1,6 +1,7 @@
 import django
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.db.models import Q
 from django.test import Client, TestCase, RequestFactory
 from ladder.models import Challenge, Ladder, Game, Rank, Match
 from ladder.views import join_ladder, leave_ladder, issue_challenge
@@ -75,7 +76,7 @@ class Test_Ladder_Objects(TestCase):
     def test_leaving_ladder(self):
         """ Tests that leaving a ladder removes player completely, moves everyone up a rank. """
         # FallbackStorage is needed to deal with a django bug
-        request = self.factory.get('{0}/join'.format(self.ladder.slug))
+        request = self.factory.get('/l/{0}/join'.format(self.ladder.slug))
         setattr(request, 'session', 'session')
         messages = FallbackStorage(request)
         setattr(request, '_messages', messages)
@@ -144,12 +145,14 @@ class Test_Challenge_Objects(TestCase):
         # user1 and user2 are on the ladder.
         response = c.post('/l/challenge', { 'challenger':self.user2.pk, 'challengee_id':self.user1.pk, 'ladder_slug': self.ladder.slug })
         print response
+
         # test redirect
         self.assertEqual(response.status_code, 302)
 
         # Check if challenge exists
-        test_challenge = Challenge.objects.filter( challengee = self.user2)
-
+        print Challenge.objects.all()
+        test_challenge = Challenge.objects.filter( Q( challengee = self.user2 ) | Q( challenger = self.user2 ) )
+        print test_challenge.count()
         self.assertEqual( 1, test_challenge.count() )
         
 
