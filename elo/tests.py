@@ -89,4 +89,3 @@ class Test_Login_Views(TestCase):
             response = client.get( test_url )
             self.assertEqual(expected_url.format(test_url), response.url)
             self.assertEqual(response.status_code, 302)
-            print "URL [ {0} ]:\tOK!".format( test_url )
