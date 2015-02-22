@@ -114,7 +114,7 @@ class Test_Ladder_Views(TestCase):
 
         # Get the confirmation of the Join
         request = client.get('/l/{0}/join'.format(self.ladder.slug))
-        self.assertEqual( request.status_code, 200 )
+        self.assertEqual( request.status_code, 301 )
         self.assertInHTML( '<input type="submit" value="Join" />', request.content )
 
         # Submit the Join
@@ -147,7 +147,7 @@ class Test_Ladder_Views(TestCase):
 
             # Get the confirmation of the Join
             request = client.get('/l/{0}/join'.format(self.ladder.slug))
-            self.assertEqual( request.status_code, 200 )
+            self.assertEqual( request.status_code, 301 )
             self.assertInHTML( '<input type="submit" value="Join" />', request.content )
 
             # Submit the Join

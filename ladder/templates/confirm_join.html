@@ -16,7 +16,7 @@ Are you sure you want to join the ladder: <u>{{ ladder.name }}</u> playing <em>{
 <br />
 <strong>Leaving the ladder will result in penalty and lockout from that ladder!</strong> (not really, but maybe soon.)<br />
 <br />
-<form action="/l/{{ ladder.slug }}/join" method="post">
+<form action="/l/{{ ladder.slug }}/join/" method="post">
     {% csrf_token %}
     <input type="submit" value="Join" />
 </form>

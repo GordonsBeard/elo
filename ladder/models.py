@@ -295,7 +295,7 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
 
         # get a list of all non-completed challenges
 
-        open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (0,) )
+        open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (0, 1) )
         for challenge in open_challenges:
             challenge.delete()
 
