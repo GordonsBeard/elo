@@ -77,9 +77,9 @@ class Test_Login_Views(TestCase):
         """ Tests the login protection/redirect for protected views. """
         client = TestClient()
         protected_urls = ( 
-                    "/u/messages", 
-                    "/u/messages/challenges", 
-                    "/u/messages/matches", 
+                    "/u/messages/", 
+                    "/u/messages/challenges/", 
+                    "/u/messages/matches/", 
                     "/l/challenge", 
                     "/l/create", 
                     )

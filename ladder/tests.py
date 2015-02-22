@@ -113,12 +113,12 @@ class Test_Ladder_Views(TestCase):
         join_ladder_url = '/l/{0}/join'.format( self.ladder.slug )
 
         # Get the confirmation of the Join
-        request = client.get('/l/{0}/join'.format(self.ladder.slug))
-        self.assertEqual( request.status_code, 301 )
+        request = client.get('/l/{0}/join/'.format(self.ladder.slug))
+        self.assertEqual( request.status_code, 200 )
         self.assertInHTML( '<input type="submit" value="Join" />', request.content )
 
         # Submit the Join
-        response = client.post('/l/{0}/join'.format( self.ladder.slug ) )
+        response = client.post('/l/{0}/join/'.format( self.ladder.slug ) )
         
         # Should be redirected back to the ladder
         expected_url = 'http://testserver/l/{0}'.format( self.ladder.slug )
@@ -143,15 +143,15 @@ class Test_Ladder_Views(TestCase):
             # Log the user in first
             client = TestClient()
             client.login_user(single_user)
-            join_ladder_url = '/l/{0}/join'.format( self.ladder.slug )
+            join_ladder_url = '/l/{0}/join/'.format( self.ladder.slug )
 
             # Get the confirmation of the Join
-            request = client.get('/l/{0}/join'.format(self.ladder.slug))
-            self.assertEqual( request.status_code, 301 )
+            request = client.get('/l/{0}/join/'.format(self.ladder.slug))
+            self.assertEqual( request.status_code, 200 )
             self.assertInHTML( '<input type="submit" value="Join" />', request.content )
 
             # Submit the Join
-            response = client.post('/l/{0}/join'.format( self.ladder.slug ) )
+            response = client.post('/l/{0}/join/'.format( self.ladder.slug ) )
         
             # Should be redirected back to the ladder
             expected_url = 'http://testserver/l/{0}'.format( self.ladder.slug )
