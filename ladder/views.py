@@ -18,7 +18,7 @@ def _open_challenges_exist(user, ladder):
         statuses = Tuple of challenge statuses (see ladder views)
     """
 
-    open_challenges = Challenge.objects.filter( ( ( Q( challenger=user ) | Q( challengee=user ) ) & Q( ladder = ladder ) ) & Q( accepted = 0 ) )
+    open_challenges = Challenge.objects.filter( ( ( Q( challenger=user ) | Q( challengee=user ) ) & Q( ladder = ladder ) ) & Q( accepted = Challenge.STATUS_ACCEPTED ) | Q( accepted = Challenge.STATUS_NOT_ACCEPTED ) )
 
     if open_challenges.count() > 0:
         return True
@@ -60,7 +60,7 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     challengables = []
 
     # user has no open challenges in this ladder
-    open_challenges = _get_user_challenges(user, ladder, (0, 1)).count()
+    open_challenges = _get_user_challenges(user, ladder, (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED)).count()
 
     # Get user's arrow and rank
     user_arrow = user_rank.arrow
