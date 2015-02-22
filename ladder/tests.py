@@ -138,22 +138,20 @@ class Test_Challenge_Objects(TestCase):
 
     def test_issue_challenge(self):
         """ Tests that a challenge is issued to the correct player/ladder """
+        # TODO: Currently cannot login because of OpenID
         c = Client()
         
-        # FallbackStorage is needed to deal with a django bug
-        request = self.factory.get('{0}/join'.format(self.ladder.slug))
-        setattr(request, 'session', 'session')
-        messages = FallbackStorage(request)
-        setattr(request, '_messages', messages)
-
         # user1 and user2 are on the ladder.
-        # user2 issues a challenge request to user1
-        request.user = self.user2
-        response = c.post('/l/challenge', { 'challenger':self.user1rank.id, 'challengee':self.user2rank.player.pk, 'ladder': self.ladder.slug })
+        response = c.post('/l/challenge', { 'challenger':self.user2.pk, 'challengee_id':self.user1.pk, 'ladder_slug': self.ladder.slug })
+        print response
+        # test redirect
+        self.assertEqual(response.status_code, 302)
 
-        self.assertEqual(response.status_code, 200)
+        # Check if challenge exists
+        test_challenge = Challenge.objects.filter( challengee = self.user2)
 
-        print response.content
+        self.assertEqual( 1, test_challenge.count() )
+        
 
     #def test_challenge_creation(self):
     #    """ Tests challenge is created with defaults. """
