@@ -1,14 +1,34 @@
 ﻿from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, render_to_response
+from django.shortcuts import redirect, render, render_to_response
 from django.template import RequestContext
 from django import forms
 from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
+
+def _get_user_challenges(user, ladder = None, statuses = None):
+    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
+        user    = User object
+        ladder  = Ladder object (optional)
+        statuses = Tuple of challenge statuses (see ladder views)
+        """
+
+    # Grab the challenges from a user without filters
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
+    # Narrow it down to a single ladder if provided.
+    if ladder is not None:
+        open_challenges = open_challenges.filter( ladder = ladder )
+    # Narrow it down to statuses requested
+    if statuses is not None:
+        for status in statuses:
+            open_challenges = open_challenges.filter( accepted = status )
+
+    return open_challenges
 
 def _get_valid_targets(user, user_rank, allTargets, ladder):
     """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
@@ -24,7 +44,7 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     challengables = []
 
     # user has no open challenges in this ladder
-    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)) & (Q(accepted = Challenge.STATUS_NOT_ACCEPTED) | Q(accepted = Challenge.STATUS_ACCEPTED))).filter(ladder = ladder).count()
+    open_challenges = _get_user_challenges(user, ladder, (0, 1)).count()
 
     # Get user's arrow and rank
     user_arrow = user_rank.arrow
@@ -168,24 +188,29 @@ def leave_ladder(request, ladderslug, **kwargs):
   
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
+@login_required
 def issue_challenge(request):
-    # TODO: if POST: confirm/issue challenge
-    # TODO: otherwi: show a list of people you can challenge
+    # If POST: confirm/issue challenge
+    if request.POST != {}:
+        # unpack post
+        challengee_id   = request.POST['challengee']
+        ladder_slug     = request.POST['ladder']
 
-    # unpack post
-    challengee_id   = request.POST['challengee']
-    ladder_slug     = request.POST['ladder']
+        challenger      = request.user
+        challengee      = User.objects.get(pk = challengee_id)
+        ladder          = Ladder.objects.get(slug=ladder_slug)
 
-    challenger      = request.user
-    challengee      = User.objects.get(pk = challengee_id)
-    ladder          = Ladder.objects.get(slug=ladder_slug)
+        # Generate a challenge
+        challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+        challenge.save()
 
-    # Generate a challenge
-    challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
-    challenge.save()
+        messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+        return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 
-    messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
-    return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
+    # Otherwise show a list of people you can challenge
+    else:
+        return redirect('/u/messages/challenges/')
+
 
 def create_ladder(request):
     class CreateLadderForm(forms.ModelForm):

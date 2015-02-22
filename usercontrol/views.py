@@ -3,12 +3,11 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from ladder.models import Rank, Challenge, Match
+from ladder.views import _get_user_challenges
 from datetime import datetime
 
 PROFILE_RECENT_MATCHES  = 5     # How many matches to show under the "Recent Matches" header
 PROFILE_ACTIVE_LADDERS  = 5     # How many ladders to show under the "Active Ladders" header
-
-# Create your views here.
 
 def profile( request, username ) :
   user        = get_object_or_404( User, username = username )
@@ -24,7 +23,7 @@ def profile( request, username ) :
   return render( request, "profile.html", { 'userp':user, 'stats':stats, 'matches':matches, 'ranks':ranks } )
 
 def message_list( request ) :
-  num_challenges  = Challenge.objects.filter( accepted = Challenge.STATUS_NOT_ACCEPTED ).count()
+  num_challenges  = _get_user_challenges( request.user ).filter( accepted = 0 ).count()
   num_matches     = Match.objects.filter( Q(winner__isnull = True) & ( Q(challengee = request.user) | Q(challenger = request.user) ) ).count()
   return render( request, "messages.html", { 'num_challenges':num_challenges, 'num_matches':num_matches } )
 
@@ -45,8 +44,21 @@ def message_challenges( request ) :
     except KeyError :
       messages.error( "Not enough information to complete request." )
 
-  challenges = Challenge.objects.filter( challengee = request.user, accepted = Challenge.STATUS_NOT_ACCEPTED ).order_by( '-match__date_challenged' )
-  return render( request, "challenges.html", { 'challenges':challenges } )
+  challenges = _get_user_challenges( request.user )
+
+  # status = 1
+  # Accepted
+  open_challenges = challenges.filter( challengee = request.user ).filter( accepted = 0 )
+
+  # status = 0
+  # Not Accepted / Pending
+  pending_challenges = challenges.filter( challenger = request.user ).filter( accepted = 0 )
+
+  # status = 2, 3, 4
+  # Completed, Forfeit, Postponed
+  past_challenges = challenges.filter( Q( challenger = request.user )|Q( challengee = request.user ) ).filter( Q( accepted = 2 )|Q( accepted = 3 )|Q( accepted = 4 ) )
+
+  return render( request, "challenges.html", { 'open_challenges':open_challenges, 'pending_challenges': pending_challenges, 'past_challenges':past_challenges } )
 
 def message_matches( request ) :
   if request.method == "POST" :

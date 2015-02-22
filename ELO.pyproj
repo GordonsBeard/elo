@@ -43,6 +43,13 @@
     <Compile Include="ladder\views.py" />
     <Compile Include="ladder\__init__.py" />
     <Compile Include="manage.py" />
+    <Compile Include="usercontrol\admin.py" />
+    <Compile Include="usercontrol\migrations\__init__.py" />
+    <Compile Include="usercontrol\models.py" />
+    <Compile Include="usercontrol\tests.py" />
+    <Compile Include="usercontrol\urls.py" />
+    <Compile Include="usercontrol\views.py" />
+    <Compile Include="usercontrol\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />
@@ -128,6 +135,11 @@
     <Content Include="static\css\msdropdown\sprite.css" />
     <Content Include="static\css\reset.css" />
     <Content Include="static\css\tags.css" />
+    <Content Include="usercontrol\migrations\__init__.pyc" />
+    <Content Include="usercontrol\templates\challenges.html" />
+    <Content Include="usercontrol\templates\matches.html" />
+    <Content Include="usercontrol\templates\messages.html" />
+    <Content Include="usercontrol\templates\profile.html" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="elo" />
@@ -147,6 +159,9 @@
     <Folder Include="static\admin\js\admin" />
     <Folder Include="static\css" />
     <Folder Include="static\css\msdropdown" />
+    <Folder Include="usercontrol\" />
+    <Folder Include="usercontrol\migrations\" />
+    <Folder Include="usercontrol\templates\" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
