@@ -50,20 +50,31 @@ class TestClient(Client):
         # Save the session values.
         request.session.save()
 
-#client.login_user(self.user1)
-
-class Test_User_Control(TestCase):
+class Test_Login_Views(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
         # users
         self.user = User.objects.create_user(username='TestUser', email='test@test.com',  password='test')
 
-    #def test_login_logout_view(self):
-    #    """Makes sure the options to login/logout are visible at appropriate times."""
+    def test_login_link(self):
+        """Makes sure the option to login is visible at appropriate time."""
+        client = TestClient()
+        response = client.get( '/' )
+        self.assertInHTML( '<a href="/openid/login">Log In</a>', response.content )
+
+    def test_logout_link(self):
+        """Makes sure the options to logout is visible at appropriate time."""
+        client = TestClient()
+        
+        # Log the user in first
+        client.login_user(self.user)
+
+        response = client.get( '/' )
+        self.assertInHTML( '<a href="/logout">logout</a>', response.content )
 
     def test_login_protection(self):
-        """ Tests  the login protection for protected views. """
+        """ Tests the login protection/redirect for protected views. """
         client = TestClient()
         protected_urls = ( 
                     "/u/messages", 
