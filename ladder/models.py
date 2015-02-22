@@ -266,19 +266,13 @@ def _get_user_challenges(user, ladder = None, statuses = None):
 
     # Grab the challenges from a user without filters
     open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
-    print "open challenges, all: {0}".format(open_challenges)
 
     # Narrow it down to a single ladder if provided.
     if ladder is not None:
         open_challenges = open_challenges.filter( ladder = ladder )
-        print "Ladder exists"
-        print open_challenges
     # Narrow it down to statuses requested
     if statuses is not None:
-        print open_challenges.all()
         open_challenges = Challenge.objects.filter(ladder = ladder, accepted__in = statuses)
-
-        print open_challenges
 
     return open_challenges
 
@@ -301,7 +295,6 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
 
         # get a list of all non-completed challenges
         open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED) )
-        print open_challenges
         for challenge in open_challenges:
             challenge.delete()
 
