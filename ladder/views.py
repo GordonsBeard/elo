@@ -142,7 +142,7 @@ def index(request, ladderslug = None):
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
-
+@login_required
 def join_ladder(request, ladderslug):
     # TODO: Confirm joining ladder
     ladder_requested = Ladder.objects.get(slug = ladderslug)
@@ -166,7 +166,7 @@ def join_ladder(request, ladderslug):
     
     return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
 
-
+@login_required
 def leave_ladder(request, ladderslug, **kwargs):
     # TODO: Confirm leaving ladder
     ladder_requested = Ladder.objects.get(slug = ladderslug)
@@ -211,7 +211,7 @@ def issue_challenge(request):
     else:
         return redirect('/u/messages/challenges/')
 
-
+@login_required
 def create_ladder(request):
     class CreateLadderForm(forms.ModelForm):
         class Meta:
