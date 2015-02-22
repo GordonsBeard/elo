@@ -151,23 +151,27 @@ def join_ladder(request, ladder_slug):
     """This view will confirm a user's attempt to join a ladder."""
     ladder = Ladder.objects.get(slug = ladder_slug)
 
-    # before going further, ensure the ladder is currently accepting signups.
+    # Before going further, ensure the ladder is currently accepting signups.
     if ladder.signups == 0:
         messages.error(request, u"This ladder is currently not accepting signups. Please contact the owner for more information.")
         return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
+    # If GET and user is not ranked: allow the confirmation.
     if request.method == 'GET' and not _user_already_ranked(request.user, ladder):
         ladder = Ladder.objects.get(slug = ladder_slug)
         return render_to_response('confirm_join.html', {"ladder":ladder}, context_instance=RequestContext(request))
 
+    # If GET but user is ranked: abort.
     elif request.method == 'GET' and _user_already_ranked(request.user, ladder):
         messages.error(request, u"Cannot join: you are already ranked on this ladder.")
         return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
+    # If POST but user is ranked: abort.
     elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
         messages.error(request, u"Cannot join: you are already ranked on this ladder.")
         return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
     
+    # If POST and user is unranked: confirm the join.
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
         rank_list = Rank.objects.filter(ladder = ladder)
         
@@ -179,26 +183,26 @@ def join_ladder(request, ladder_slug):
         return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
 @login_required
-def leave_ladder(request, ladder_slug, **kwargs):
-    # TODO: Confirm leaving ladder
-    ladder_requested = Ladder.objects.get(slug = ladder_slug)
+def leave_ladder(request, ladder_slug):
+    """This view will confirm a user's attempt to leave a ladder."""
+    ladder = Ladder.objects.get(slug = ladder_slug)
 
-    if not request.user.is_authenticated():
-        messages.error(request, u"Log in before trying to join a ladder!")
+    # If GET: display confirmation of the leave
+    if request.method == 'GET':
+        return render_to_response('confirm_leave.html', {"ladder":ladder}, context_instance=RequestContext(request))
 
-        return index(request, ladder_slug)
+    # If POST and user is unranked: abort
+    elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
+        messages.error(request, u"You are not ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
-    rank_list = Rank.objects.filter(ladder = ladder_requested)
-
-    try:
-        player_rank = Rank.objects.get(player = request.user, ladder = ladder_requested)
+    # If POST and user is ranked: confirm the delet
+    elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
+        player_rank = Rank.objects.get(player = request.user, ladder = ladder)
         player_rank.delete()
 
-        messages.success(request, u"You have left this ladder. Everyone gets a free promotion!")
-    except ObjectDoesNotExist:
-        messages.error(request, u"You're not even on this ladder dumdum.")
-  
-    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+        messages.success(request, u"You have been removed from the ladder: {0}".format(ladder.name))
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
 @login_required
 def issue_challenge(request):
