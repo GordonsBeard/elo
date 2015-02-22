@@ -101,15 +101,18 @@ def single_ladder_details(request, ladder):
             current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
             challengables = _get_valid_targets(request.user, current_player_rank, rank_list, ladder)
             messages.debug(request, "Challengable ranks: {0}".format(challengables))
+            open_challenges_exist = _open_challenges_exist(request.user, ladder)
         except ObjectDoesNotExist:
+            open_challenges_exist = False
             current_player_rank = None
             challengables = []
     else:
+        open_challenges_exist = False
         current_player_rank = None
         join_link = False
         challengables = []
 
-    open_challenges_exist = _open_challenges_exist(request.user, ladder)
+    
 
     match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
