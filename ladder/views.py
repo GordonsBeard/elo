@@ -132,41 +132,49 @@ def index(request, ladder_slug = None):
         single_ladder_info = single_ladder_details(request, ladder)
 
         return render_to_response('single_ladder_listing.html', single_ladder_info, context_instance=RequestContext(request))
-
-    # Mysterie ????
-    elif request.method == 'POST':
-        raise NotImplementedError("How are you POSTing? Why? Stop it please.")
     
     # Get a list of all ladders
     else:
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
+def _user_already_ranked(user, ladder):
+    """Returns true if user exists on ladder."""
+    try:
+        player_rank = Rank.objects.get( player = user, ladder = ladder )
+    except ObjectDoesNotExist:
+        return False
+    return True
+
 @login_required
 def join_ladder(request, ladder_slug):
     """This view will confirm a user's attempt to join a ladder."""
+    ladder = Ladder.objects.get(slug = ladder_slug)
 
-    if request.method == 'GET':
+    # before going further, ensure the ladder is currently accepting signups.
+    if ladder.signups == 0:
+        messages.error(request, u"This ladder is currently not accepting signups. Please contact the owner for more information.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
+
+    if request.method == 'GET' and not _user_already_ranked(request.user, ladder):
         ladder = Ladder.objects.get(slug = ladder_slug)
         return render_to_response('confirm_join.html', {"ladder":ladder}, context_instance=RequestContext(request))
 
-    elif request.method == 'POST':
-        # unpack the post
-        user = request.user
-        ladder_slug = request.POST['ladder_slug']
+    elif request.method == 'GET' and _user_already_ranked(request.user, ladder):
+        messages.error(request, u"Cannot join: you are already ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
-        ladder = Ladder.objects.get(slug = ladder_slug)
+    elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
+        messages.error(request, u"Cannot join: you are already ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
+    
+    elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
         rank_list = Rank.objects.filter(ladder = ladder)
-
-        try:
-            player_rank = Rank.objects.get(player = request.user, ladder=ladder)
-            messages.error(request, u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count()))
-
-        except ObjectDoesNotExist:
-            new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder)
-            new_rank.save()
-            rank_list = Rank.objects.filter(ladder = ladder)
-            messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
+        
+        new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder)
+        new_rank.save()
+        rank_list = Rank.objects.filter(ladder = ladder)
+        messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
     
         return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 

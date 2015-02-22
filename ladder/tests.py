@@ -99,58 +99,76 @@ class Test_Ladder_Views(TestCase):
         self.user2 = User.objects.create_user(username='TestUser 2', email='test2@test.com',  password='test')
         self.user3 = User.objects.create_user(username='TestUser 3', email='test3@test.com',  password='test')
         self.unranked_user = User.objects.create_user(username='Unranked User', email='unranked@test.com',  password='test')
-
+        
         # game (Test Game [tg]) and ladder (default settings)
         self.game = Game.objects.create(name = "Test Game", abv = "tg")
-        self.ladder = Ladder.objects.create(owner = self.user1, game = self.game)
+        self.ladder = Ladder.objects.create(name = "Test Ladder", owner = self.user1, game = self.game)
 
-    def test_join_ladder_view(self):
-        """ Tests that joining a ladder (via join_ladder) places you in last place with an up arrow. """
+    def test_join_ladder_view_single(self):
+        """ Tests that joining a ladder (via views) places you in last place with an up arrow. """
         
         # Log the user in first
         client = TestClient()
         client.login_user(self.user1)
-
         join_ladder_url = '/l/{0}/join'.format( self.ladder.slug )
 
         # Get the confirmation of the Join
         request = client.get('/l/{0}/join'.format(self.ladder.slug))
         self.assertEqual( request.status_code, 200 )
-        self.assertInHTML( '<input type="submit" value="Join"></input>', request.content )
+        self.assertInHTML( '<input type="submit" value="Join" />', request.content )
 
         # Submit the Join
-        response = c.post('/l/{0}/join', { 'ladder_slug': self.ladder.slug, 'user': self.user1 })
+        response = client.post('/l/{0}/join'.format( self.ladder.slug ) )
         
         # Should be redirected back to the ladder
-        self.assertEqual( response.status_code, 302 )
-        self.assertEqual( response.url, '/l/{0}/'.format( self.ladder.slug ) )
+        expected_url = 'http://testserver/l/{0}'.format( self.ladder.slug )
+        self.assertRedirects(response, expected_url, status_code = 302, target_status_code = 301)
 
         # User should now be ranked on this ladder.
         testUserRank = Rank.objects.get( player = self.user1, ladder = self.ladder )
         self.assertEqual( testUserRank.arrow, testUserRank.ARROW_UP )
+        self.assertEqual( testUserRank.rank, 1 )
 
         # Message should state you've joined the ladder
-        self.assertEqual( '<li class="success"> You\'ve joined the ladder! </li>', response.content )
+        # Currently just checking for the existence of a message.
+        self.assertIn('messages', response.cookies)
 
-        # FallbackStorage is needed to deal with a django bug regarding messages
-        setattr(request, 'session', 'session')
-        messages = FallbackStorage(request)
-        setattr(request, '_messages', messages)
+    def test_join_ladder_view_multi(self):
+        """ Tests that joining a ladder (via views) with multiple players place you in last place with an up arrow. """
+        
+        test_users = [self.user1, self.user2, self.user3]
 
-    #    for i, testUser in enumerate((self.user1, self.user2, self.user3)):
-    #        # user joins the ladder
-    #        request.user = testUser
-    #        response = join_ladder(request, self.ladder.slug)
-    #        players_in_ladder = self.ladder.ranked_players()
+        for i, single_user in enumerate(test_users):
 
-    #        # check the rank after hitting join_ladder
-    #        testRank = Rank.objects.get(ladder = self.ladder, player = testUser)
+            # Log the user in first
+            client = TestClient()
+            client.login_user(single_user)
+            join_ladder_url = '/l/{0}/join'.format( self.ladder.slug )
 
-    #        self.assertEqual(response.status_code, 302)     # check for 302 status (redirect)
-    #        self.assertEqual(players_in_ladder, i + 1)      # should have n player(s)
-    #        self.assertEqual(testRank.arrow, '0')           # should have an up arrow
-    #        self.assertEqual(testRank.rank, i + 1)          # should have a rank of n
-    #        print response
+            # Get the confirmation of the Join
+            request = client.get('/l/{0}/join'.format(self.ladder.slug))
+            self.assertEqual( request.status_code, 200 )
+            self.assertInHTML( '<input type="submit" value="Join" />', request.content )
+
+            # Submit the Join
+            response = client.post('/l/{0}/join'.format( self.ladder.slug ) )
+        
+            # Should be redirected back to the ladder
+            expected_url = 'http://testserver/l/{0}'.format( self.ladder.slug )
+            self.assertRedirects(response, expected_url, status_code = 302, target_status_code = 301)
+
+            # User should now be ranked on this ladder.
+            testUserRank = Rank.objects.get( player = single_user, ladder = self.ladder )
+            self.assertEqual( testUserRank.arrow, testUserRank.ARROW_UP )
+            self.assertEqual( testUserRank.rank, i + 1 )
+
+            # Log this user out and begin the process again.
+            client.logout()
+
+        # Make sure that we now have 3 ranks on this Ladder
+        actual_ranks = Rank.objects.filter( ladder = self.ladder )
+        expected_ranks = len(test_users)
+        self.assertEqual( actual_ranks.count(), expected_ranks) 
 
     #def test_leaving_ladder(self):
     #    """ Tests that leaving a ladder removes player completely, moves everyone up a rank. """

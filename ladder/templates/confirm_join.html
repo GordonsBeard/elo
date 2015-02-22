@@ -1,4 +1,4 @@
-﻿{% extends "layout.html" %}
+﻿{% extends 'layout.html' %}
 
 {% load staticfiles %}
 
@@ -18,8 +18,6 @@ Are you sure you want to join the ladder: <u>{{ ladder.name }}</u> playing <em>{
 <br />
 <form action="/l/{{ ladder.slug }}/join" method="post">
     {% csrf_token %}
-    <input type="hidden" name="user" value="{{ user }}" />
-    <input type="hidden" name="ladder_slug" value="{{ ladder.slug }}" />
     <input type="submit" value="Join" />
 </form>
 
