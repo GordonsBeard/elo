@@ -123,11 +123,11 @@ def list_all_ladders(request):
 
     return {'match_list':match_list, 'rank_list':rank_list, 'ladder_list':ladder_list, 'your_challenges':your_challenges}
 
-def index(request, ladderslug = None):
+def index(request, ladder_slug = None):
     """Display a list of all ladders, or just one ladder."""
     # Single ladder was requested via GET or directly via URL
-    if request.GET != {} or ladderslug:
-        get_slug = ladderslug if ladderslug else request.GET['ladderslug']
+    if request.GET != {} or ladder_slug:
+        get_slug = ladder_slug if ladder_slug else request.GET['ladder_slug']
         ladder = Ladder.objects.get(slug = get_slug)
         single_ladder_info = single_ladder_details(request, ladder)
 
@@ -143,38 +143,42 @@ def index(request, ladderslug = None):
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
 @login_required
-def join_ladder(request, ladderslug):
-    # TODO: Confirm joining ladder
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
+def join_ladder(request, ladder_slug):
+    """This view will confirm a user's attempt to join a ladder."""
 
-    if not request.user.is_authenticated():
-        messages.error(request, u"Log in before trying to join a ladder!")
+    if request.method == 'GET':
+        ladder = Ladder.objects.get(slug = ladder_slug)
+        return render_to_response('confirm_join.html', {"ladder":ladder}, context_instance=RequestContext(request))
 
-        return index(request, ladderslug, message)
+    elif request.method == 'POST':
+        # unpack the post
+        user = request.user
+        ladder_slug = request.POST['ladder_slug']
 
-    rank_list = Rank.objects.filter(ladder = ladder_requested)
+        ladder = Ladder.objects.get(slug = ladder_slug)
+        rank_list = Rank.objects.filter(ladder = ladder)
 
-    try:
-        player_rank = Rank.objects.get(player = request.user, ladder=ladder_requested)
-        messages.error(request, u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count()))
+        try:
+            player_rank = Rank.objects.get(player = request.user, ladder=ladder)
+            messages.error(request, u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count()))
 
-    except ObjectDoesNotExist:
-        new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder_requested)
-        new_rank.save()
-        rank_list = Rank.objects.filter(ladder = ladder_requested)
-        messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
+        except ObjectDoesNotExist:
+            new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder)
+            new_rank.save()
+            rank_list = Rank.objects.filter(ladder = ladder)
+            messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
     
-    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
 @login_required
-def leave_ladder(request, ladderslug, **kwargs):
+def leave_ladder(request, ladder_slug, **kwargs):
     # TODO: Confirm leaving ladder
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
+    ladder_requested = Ladder.objects.get(slug = ladder_slug)
 
     if not request.user.is_authenticated():
         messages.error(request, u"Log in before trying to join a ladder!")
 
-        return index(request, ladderslug)
+        return index(request, ladder_slug)
 
     rank_list = Rank.objects.filter(ladder = ladder_requested)
 
