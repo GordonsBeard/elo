@@ -46,7 +46,7 @@
                 <input type="hidden" name="challenger" value="{{ user.pk }}" />
                 <input type="hidden" name="challengee" value="{{ player_rank.player.pk }}" />
                 <input type="hidden" name="ladder" value="{{ ladder.slug }}" />
-                <input type="submit" value="CHALLENGE" />
+                <input type="submit" value="CHALLENGE" {% if can_challenge %}disabled="disabled"{% endif %} />
                 </form>
                 {% endif %}
             </td>

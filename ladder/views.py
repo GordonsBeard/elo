@@ -11,18 +11,34 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 
+def _open_challenges_exist(user, ladder):
+    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
+        user    = User object
+        ladder  = Ladder object (optional)
+        statuses = Tuple of challenge statuses (see ladder views)
+    """
+
+    open_challenges = Challenge.objects.filter( ( ( Q( challenger=user ) | Q( challengee=user ) ) & Q( ladder = ladder ) ) & Q( accepted = 0 ) )
+
+    if open_challenges.count() > 0:
+        return True
+    else:
+        return False
+
 def _get_user_challenges(user, ladder = None, statuses = None):
     """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
         user    = User object
         ladder  = Ladder object (optional)
         statuses = Tuple of challenge statuses (see ladder views)
-        """
+    """
 
     # Grab the challenges from a user without filters
     open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
+
     # Narrow it down to a single ladder if provided.
     if ladder is not None:
         open_challenges = open_challenges.filter( ladder = ladder )
+
     # Narrow it down to statuses requested
     if statuses is not None:
         for status in statuses:
@@ -93,9 +109,11 @@ def single_ladder_details(request, ladder):
         join_link = False
         challengables = []
 
+    open_challenges_exist = _open_challenges_exist(request.user, ladder)
+
     match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
-    return {'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
+    return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
     """Retrieve info on all the ladders."""
@@ -216,11 +234,16 @@ def issue_challenge(request):
         challengee      = User.objects.get(pk = challengee_id)
         ladder          = Ladder.objects.get(slug=ladder_slug)
 
-        # Generate a challenge
-        challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
-        challenge.save()
+        # Check for open challenges
 
-        messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+        if _open_challenges_exist(request.user, ladder):
+            messages.error(request, u"You have open challenges, you cannot challenge at this time.")
+        else:
+            # Generate a challenge
+            challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+            challenge.save()
+            messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+
         return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 
     # Otherwise show a list of people you can challenge
