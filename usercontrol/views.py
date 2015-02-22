@@ -10,7 +10,6 @@ from datetime import datetime
 PROFILE_RECENT_MATCHES  = 5     # How many matches to show under the "Recent Matches" header
 PROFILE_ACTIVE_LADDERS  = 5     # How many ladders to show under the "Active Ladders" header
 
-@login_required
 def profile( request, username ) :
   user        = get_object_or_404( User, username = username )
   stats       = { 
