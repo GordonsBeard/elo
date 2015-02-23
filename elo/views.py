@@ -88,9 +88,7 @@ def login(request):
         useroid.save()
     try:
         up = UserProfile.objects.get(user_id=user.id)
-        print "Found user profile"
     except UserProfile.DoesNotExist:
-        print "No user profile"
         up = UserProfile(user_id=user.id)
         up.save()
 

@@ -2,6 +2,7 @@
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
 from django.template.defaultfilters import slugify
 from django.utils.timezone import utc
@@ -144,12 +145,7 @@ class Challenge(models.Model):
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
 
-        if self.accepted == Challenge.STATUS_NOT_ACCEPTED:
-            """
-            When a new challenge is posted, send a message to the challengee informing them.
-            """
-            new_notice, created = ChallengeNotice.objects.get_or_create( user = self.challengee, challenge = self, notice = CHALLENGE_ISSUED )
-        elif self.accepted == Challenge.STATUS_ACCEPTED:
+        if self.accepted == Challenge.STATUS_ACCEPTED:
             """
             Once match is accepted, created the MATCH object and record the current stats.
             At this point we record the pre-match stats, so we need to get the players' current rank.
@@ -259,7 +255,30 @@ class Match(models.Model):
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
+# TODO: Remove this duplicate code
+# This is also found in ladder/views.py
+def _get_user_challenges(user, ladder = None, statuses = None):
+    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
+        user    = User object
+        ladder  = Ladder object (optional)
+        statuses = Tuple of challenge statuses (see ladder views)
+        """
+
+    # Grab the challenges from a user without filters
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
+
+    # Narrow it down to a single ladder if provided.
+    if ladder is not None:
+        open_challenges = open_challenges.filter( ladder = ladder )
+    # Narrow it down to statuses requested
+    if statuses is not None:
+        open_challenges = Challenge.objects.filter(ladder = ladder, accepted__in = statuses)
+
+    return open_challenges
+
 def del_user_rank_adjustment(instance, sender, **kwargs):
+    """This updates all existing ranks on the ladder, and cancels all outstanding challenges."""
+    
     if issubclass(sender, Rank):
         # get a list of the remaining players with a larger (worse) rank
         remainingPlayers = Rank.objects.filter(ladder = instance.ladder)
@@ -273,6 +292,11 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
             for player in lowerRankedPlayers:
                 player.rank -= 1
                 player.save()
+
+        # get a list of all non-completed challenges
+        open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED) )
+        for challenge in open_challenges:
+            challenge.delete()
 
 def adjust_rank(instance, sender, **kwargs):
     if issubclass(sender, Match):

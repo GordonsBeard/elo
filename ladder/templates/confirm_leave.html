@@ -1,0 +1,24 @@
+﻿{% extends 'layout.html' %}
+
+{% load staticfiles %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+Are you sure you want to leave the ladder: <u>{{ ladder.name }}</u>?<br />
+<br />
+<strong>Leaving this ladder CANNOT BE <u>UNDONE</u> and everyone ranked below you will be moved up a rank.</strong>
+<br />
+<form action="/l/{{ ladder.slug }}/leave/" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Leave" />
+</form>
+
+{% endblock content %}

@@ -20,3 +20,8 @@ Setup/Notes
 **dbase/**: Create this (empty) folder in the base directory.
 
 **elo/settings.py**: Add a secret key and change the `CSRF_COOKIE_DOMAIN` to `127.0.0.1`
+
+**Superuser** is not set up by default.
+You need a superuser before you can log in via Steam/OpenID: ``django-admin.py createsuperuser``.
+Edit ``elo\settings.py`` and change ``OPENID_USE_AS_ADMIN_LOGIN`` to ``FALSE``
+Then login as the superuser, give admin rights to an OpenID user and set ``OPENID_USE_AS_ADMIN_LOGIN`` back to ``True``.

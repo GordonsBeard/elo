@@ -1,0 +1,24 @@
+﻿{% extends 'layout.html' %}
+
+{% load staticfiles %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+Are you sure you want to join the ladder: <u>{{ ladder.name }}</u> playing <em>{{ ladder.game.name }}</em>?<br />
+<br />
+<strong>Leaving the ladder will result in penalty and lockout from that ladder!</strong> (not really, but maybe soon.)<br />
+<br />
+<form action="/l/{{ ladder.slug }}/join/" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Join" />
+</form>
+
+{% endblock content %}

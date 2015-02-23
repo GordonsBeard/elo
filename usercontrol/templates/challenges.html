@@ -7,11 +7,12 @@
 
 {% block content %}
 
-<h1>Challenges</h1>
+<h2>Open Challenges</h2>
 <ul>
-{% if challenges %}
-{% for challenge in challenges %}
-  <li><a href="{% url 'user:profile' challenge.challenger.username %}">{{ challenge.challenger.userprofile.handle }}</a> has challenged you to a match! Via <a href="{% url 'ladder:detail' challenge.ladder.slug %}">{{ challenge.ladder }}</a>
+{% if open_challenges %}
+{% for challenge in open_challenges %}
+  <li><a href="{% url 'user:profile' challenge.challenger.username %}">{{ challenger.challenger.userprofile.handle }}</a> has challenged you to a match! Via <a href="{% url 'ladder:detail' challenge.ladder.slug %}">{{ challenge.ladder.name }}</a></li>
+  <li>
     <form style="display:inline-block;" action="{% url 'user:message_challenges' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="note_id" value="{{ challenge.pk }}">
@@ -25,9 +26,33 @@
       <input type="submit" value="Forfeit">
     </form>
   </li>
+  
 {% endfor %}
 {% else %}
-  <li>No new challenges.</li>
+  <li>No open challenges.</li>
+{% endif %}
+</ul>
+
+<h2>Pending Challenges</h2>
+<ul>
+{% if pending_challenges %}
+{% for challenge in pending_challenges %}
+  <li>You have challenged <a href="{% url 'user:profile' challenge.challengee.username %}">{{ challenge.challengee.userprofile.handle }}</a> to a match! Via <a href="{% url 'ladder:detail' challenge.ladder.slug %}">{{ challenge.ladder.name }}</a></li>
+    <li> This match expires {{ challenge.deadline|naturaltime }}.</li>
+{% endfor %}
+{% else %}
+  <li>No pending challenges.</li>
+{% endif %}
+</ul>
+
+<h2>Past Challenges</h2>
+<ul>
+{% if past_challenges %}
+{% for challenge in past_challenges %}
+  <li>{{ challenge }} ({{ challenge.ladder.name }})</li>
+{% endfor %}
+{% else %}
+  <li>No pending challenges.</li>
 {% endif %}
 </ul>
 

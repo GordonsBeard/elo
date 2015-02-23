@@ -1,14 +1,46 @@
 ﻿from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, render_to_response
+from django.shortcuts import redirect, render, render_to_response
 from django.template import RequestContext
 from django import forms
 from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
+
+def _open_challenges_exist(user, ladder):
+    """Returns True if there are challenges open in the provided ladder for the user."""
+
+    open_challenges = Challenge.objects.filter( (Q(challenger=user)|Q(challengee=user)) & (Q(accepted = Challenge.STATUS_ACCEPTED) | Q(accepted = Challenge.STATUS_NOT_ACCEPTED)) & Q(ladder = ladder) )
+
+    if open_challenges.count() > 0:
+        return True
+    else:
+        return False
+
+def _get_user_challenges(user, ladder = None, statuses = None):
+    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
+        user    = User object
+        ladder  = Ladder object (optional)
+        statuses = Tuple of challenge statuses (see ladder views)
+    """
+
+    # Grab the challenges from a user without filters
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
+
+    # Narrow it down to a single ladder if provided.
+    if ladder is not None:
+        open_challenges = open_challenges.filter( ladder = ladder )
+
+    # Narrow it down to statuses requested
+    if statuses is not None:
+        for status in statuses:
+            open_challenges = open_challenges.filter( accepted = status )
+
+    return open_challenges
 
 def _get_valid_targets(user, user_rank, allTargets, ladder):
     """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
@@ -24,10 +56,7 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     challengables = []
 
     # user has no open challenges in this ladder
-    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)) & (Q(accepted = Challenge.STATUS_NOT_ACCEPTED) | Q(accepted = Challenge.STATUS_ACCEPTED))).filter(ladder = ladder).count()
-    if  open_challenges > 0: 
-        print "Open challenges"
-        return []
+    open_challenges = _get_user_challenges(user, ladder, (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED)).count()
 
     # Get user's arrow and rank
     user_arrow = user_rank.arrow
@@ -68,18 +97,20 @@ def single_ladder_details(request, ladder):
             current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
             challengables = _get_valid_targets(request.user, current_player_rank, rank_list, ladder)
             messages.debug(request, "Challengable ranks: {0}".format(challengables))
-            print "Challengable ranks: {0}".format(challengables)
+            open_challenges_exist = _open_challenges_exist(request.user, ladder)
         except ObjectDoesNotExist:
+            open_challenges_exist = False
             current_player_rank = None
             challengables = []
     else:
+        open_challenges_exist = False
         current_player_rank = None
         join_link = False
         challengables = []
 
     match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
     open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
-    return {'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
+    return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
     """Retrieve info on all the ladders."""
@@ -107,90 +138,116 @@ def list_all_ladders(request):
 
     return {'match_list':match_list, 'rank_list':rank_list, 'ladder_list':ladder_list, 'your_challenges':your_challenges}
 
-def index(request, ladderslug = None):
+def index(request, ladder_slug = None):
     """Display a list of all ladders, or just one ladder."""
     # Single ladder was requested via GET or directly via URL
-    if request.GET != {} or ladderslug:
-        get_slug = ladderslug if ladderslug else request.GET['ladderslug']
+    if request.GET != {} or ladder_slug:
+        get_slug = ladder_slug if ladder_slug else request.GET['ladder_slug']
         ladder = Ladder.objects.get(slug = get_slug)
         single_ladder_info = single_ladder_details(request, ladder)
 
         return render_to_response('single_ladder_listing.html', single_ladder_info, context_instance=RequestContext(request))
-
-    # Mysterie ????
-    elif request.method == 'POST':
-        raise NotImplementedError("How are you POSTing? Why? Stop it please.")
     
     # Get a list of all ladders
     else:
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
-
-def join_ladder(request, ladderslug):
-    # TODO: Confirm joining ladder
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
-
-    if not request.user.is_authenticated():
-        messages.error(request, u"Log in before trying to join a ladder!")
-
-        return index(request, ladderslug, message)
-
-    rank_list = Rank.objects.filter(ladder = ladder_requested)
-
+def _user_already_ranked(user, ladder):
+    """Returns true if user exists on ladder."""
     try:
-        player_rank = Rank.objects.get(player = request.user, ladder=ladder_requested)
-        messages.error(request, u"You are already on this ladder! You are rank {0} of {1}.".format(player_rank.rank, rank_list.count()))
-
+        player_rank = Rank.objects.get( player = user, ladder = ladder )
     except ObjectDoesNotExist:
-        new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder_requested)
+        return False
+    return True
+
+@login_required
+def join_ladder(request, ladder_slug):
+    """This view will confirm a user's attempt to join a ladder."""
+    ladder = Ladder.objects.get(slug = ladder_slug)
+
+    # Before going further, ensure the ladder is currently accepting signups.
+    if ladder.signups == 0:
+        messages.error(request, u"This ladder is currently not accepting signups. Please contact the owner for more information.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
+
+    # If GET and user is not ranked: allow the confirmation.
+    if request.method == 'GET' and not _user_already_ranked(request.user, ladder):
+        ladder = Ladder.objects.get(slug = ladder_slug)
+        return render_to_response('confirm_join.html', {"ladder":ladder}, context_instance=RequestContext(request))
+
+    # If GET but user is ranked: abort.
+    elif request.method == 'GET' and _user_already_ranked(request.user, ladder):
+        messages.error(request, u"Cannot join: you are already ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
+
+    # If POST but user is ranked: abort.
+    elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
+        messages.error(request, u"Cannot join: you are already ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
+    
+    # If POST and user is unranked: confirm the join.
+    elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
+        rank_list = Rank.objects.filter(ladder = ladder)
+        
+        new_rank = Rank(player = request.user, rank = rank_list.count() + 1, arrow = 0, ladder = ladder)
         new_rank.save()
-        rank_list = Rank.objects.filter(ladder = ladder_requested)
+        rank_list = Rank.objects.filter(ladder = ladder)
         messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
     
-    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
+@login_required
+def leave_ladder(request, ladder_slug):
+    """This view will confirm a user's attempt to leave a ladder."""
+    ladder = Ladder.objects.get(slug = ladder_slug)
 
-def leave_ladder(request, ladderslug, **kwargs):
-    # TODO: Confirm leaving ladder
-    ladder_requested = Ladder.objects.get(slug = ladderslug)
+    # If GET: display confirmation of the leave
+    if request.method == 'GET':
+        return render_to_response('confirm_leave.html', {"ladder":ladder}, context_instance=RequestContext(request))
 
-    if not request.user.is_authenticated():
-        messages.error(request, u"Log in before trying to join a ladder!")
+    # If POST and user is unranked: abort
+    elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
+        messages.error(request, u"You are not ranked on this ladder.")
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
-        return index(request, ladderslug)
-
-    rank_list = Rank.objects.filter(ladder = ladder_requested)
-
-    try:
-        player_rank = Rank.objects.get(player = request.user, ladder = ladder_requested)
+    # If POST and user is ranked: confirm the delet
+    elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
+        player_rank = Rank.objects.get(player = request.user, ladder = ladder)
         player_rank.delete()
 
-        messages.success(request, u"You have left this ladder. Everyone gets a free promotion!")
-    except ObjectDoesNotExist:
-        messages.error(request, u"You're not even on this ladder dumdum.")
-  
-    return HttpResponseRedirect('/l/{0}'.format(ladder_requested.slug))
+        messages.success(request, u"You have been removed from the ladder: {0}".format(ladder.name))
+        return HttpResponseRedirect('/l/{0}'.format(ladder.slug))
 
+@login_required
 def issue_challenge(request):
-    # TODO: if POST: confirm/issue challenge
-    # TODO: otherwi: show a list of people you can challenge
+    # If POST: confirm/issue challenge
+    if request.POST != {}:
+        # unpack post
+        challengee_id   = request.POST['challengee']
+        ladder_slug     = request.POST['ladder']
 
-    # unpack post
-    challengee_id   = request.POST['challengee']
-    ladder_slug     = request.POST['ladder']
+        challenger      = request.user
+        challengee      = User.objects.get(pk = challengee_id)
+        ladder          = Ladder.objects.get(slug=ladder_slug)
 
-    challenger      = request.user
-    challengee      = User.objects.get(pk = challengee_id)
-    ladder          = Ladder.objects.get(slug=ladder_slug)
+        # Check for open challenges
 
-    # Generate a challenge
-    challenge       = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
-    challenge.save()
+        if _open_challenges_exist(request.user, ladder):
+            messages.error(request, u"You have open challenges, you cannot challenge at this time.")
+        else:
+            # Generate a challenge
+            challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+            challenge.save()
+            messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
 
-    messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
-    return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
+        return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 
+    # Otherwise show a list of people you can challenge
+    else:
+        return redirect('/u/messages/challenges/')
+
+@login_required
 def create_ladder(request):
     class CreateLadderForm(forms.ModelForm):
         class Meta:
