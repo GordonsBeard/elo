@@ -21,7 +21,7 @@
   </table>
 
   {% if user.is_authenticated and not userp == user %}
-    <p>You are participating in {{ common|length }} ladders against {{ userp.userprofile.handle }}.</p>
+    <p>You are participating in {{ common|length }} ladder{{ common|pluralize }} against {{ userp.userprofile.handle }}.</p>
     {% if common %}
     <ul>
       {% for l in common %}
