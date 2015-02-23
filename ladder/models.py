@@ -255,27 +255,6 @@ class Match(models.Model):
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
-# TODO: Remove this duplicate code
-# This is also found in ladder/views.py
-def _get_user_challenges(user, ladder = None, statuses = None):
-    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
-        user    = User object
-        ladder  = Ladder object (optional)
-        statuses = Tuple of challenge statuses (see ladder views)
-        """
-
-    # Grab the challenges from a user without filters
-    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
-
-    # Narrow it down to a single ladder if provided.
-    if ladder is not None:
-        open_challenges = open_challenges.filter( ladder = ladder )
-    # Narrow it down to statuses requested
-    if statuses is not None:
-        open_challenges = Challenge.objects.filter(ladder = ladder, accepted__in = statuses)
-
-    return open_challenges
-
 def del_user_rank_adjustment(instance, sender, **kwargs):
     """This updates all existing ranks on the ladder, and cancels all outstanding challenges."""
     

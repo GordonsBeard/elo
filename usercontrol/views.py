@@ -4,14 +4,17 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from ladder.models import Rank, Challenge, Match
-from ladder.views import _get_user_challenges
+from ladder.helpers import _get_user_challenges
 from datetime import datetime
 
 PROFILE_RECENT_MATCHES  = 5     # How many matches to show under the "Recent Matches" header
 PROFILE_ACTIVE_LADDERS  = 5     # How many ladders to show under the "Active Ladders" header
 
 def profile( request, username ) :
+  # Get our user object or bail
   user        = get_object_or_404( User, username = username )
+
+  # Get user info
   stats       = { 
     "Ladders Joined":       Rank.objects.filter( player_id = user.pk ).count(), 
     "Challenges Issued":    Challenge.objects.filter( challenger_id = user.pk ).count(), 
@@ -25,6 +28,9 @@ def profile( request, username ) :
 
   # Get common ladders
   if request.user.is_authenticated() and not user == request.user :
+    # TODO : find these more efficiently
+    # common_ladders is the intersection of user's ladders and request.user's ladders
+    # invite_ladders is the difference of request.user's ladders (that they can invite to) and user's ladders
     common_ladders  = [r.ladder for r in ladders if r.ladder.rank_set.filter( player = request.user ).count()]
     invite_ladders  = [r.ladder for r in request.user.rank_set.order_by( 'ladder__name' ) if not r.ladder.rank_set.filter( player = user ).count()]
   else :
