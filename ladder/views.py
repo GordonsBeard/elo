@@ -85,6 +85,16 @@ def index(request, ladder_slug = None):
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
+def match_list( request, ladder_slug ) :
+    # TODO: Implement this
+    # Show a (paged) list of all matches on the ladder
+    pass;
+
+def match_detail( request, ladder_slug, match_id ) :
+    # TODO: Implement this
+    # Show details about the match defined by match_id
+    pass;
+
 def _user_already_ranked(user, ladder):
     """Returns true if user exists on ladder."""
     try:

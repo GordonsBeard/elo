@@ -70,3 +70,12 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
         challengables.append(target_rank.rank)
 
     return challengables
+
+# TODO: test this
+# It should wrap a view function with automatic paging support
+def paged( fn, default_length ) :
+    def _paged_viewfn( request, *args, **kwargs ) :
+        page = request.GET['p'] if request.method == "GET" and request.GET.has_key( 'p' ) else 1
+        page_length = request.GET['l'] if request.method == "GET" and request.GET.has_key( 'l' ) else default_length
+        return fn( request, page = page, page_length = page_length, *args, **kwargs )
+    return _paged_viewfn
