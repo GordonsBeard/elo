@@ -19,6 +19,32 @@
     </tr>
     {% endfor %}
   </table>
+
+  {% if user.is_authenticated and not userp == user %}
+    <p>You are participating in {{ common|length }} ladders against {{ userp.userprofile.handle }}.</p>
+    {% if common %}
+    <ul>
+      {% for l in common %}
+      <li><a href="{% url 'ladder:detail' l.slug %}">{{ l }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if invite %}
+    <p>Invite to ladder:
+    <form style="display:inline;" method="post">
+      {% csrf_token %}
+      <select name="ladder" style="display:inline;">
+        {% for l in invite %}
+        <option value="{{ l.slug }}">{{ l }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Invite">
+    </form>
+    </p>
+    <br />
+    {% endif %}
+  {% endif %}
 </div> <!-- profile_stats -->
 
 <div class="profile_block" id="profile_matches">

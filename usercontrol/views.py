@@ -20,8 +20,18 @@ def profile( request, username ) :
     "Matches Lost":         Match.objects.filter( Q(winner_id__isnull = False) & ( Q(challengee = user) | Q(challenger = user) ) & ~Q(winner_id = user.pk) ).count(),
   }
   matches     = Match.objects.filter( winner_id__isnull = False ).filter( Q(challengee = user) | Q(challenger = user) ).order_by( '-date_complete' )[:PROFILE_RECENT_MATCHES]
-  ranks       = [(r,r.ladder.latest_match()) for r in user.rank_set.order_by( '-ladder__created' )[:PROFILE_ACTIVE_LADDERS]]
-  return render( request, "profile.html", { 'userp':user, 'stats':stats, 'matches':matches, 'ranks':ranks } )
+  ladders     = user.rank_set.order_by( '-ladder__created' )
+  ranks       = [(r,r.ladder.latest_match()) for r in ladders[:PROFILE_ACTIVE_LADDERS]]
+
+  # Get common ladders
+  if request.user.is_authenticated and not user == request.user :
+    common_ladders  = [r.ladder for r in ladders if r.ladder.rank_set.filter( player = request.user ).count()]
+    invite_ladders  = [r.ladder for r in request.user.rank_set.order_by( 'ladder__name' ) if not r.ladder.rank_set.filter( player = user ).count()]
+  else :
+    common_ladders  = []
+    invite_ladders  = []
+
+  return render( request, "profile.html", { 'userp':user, 'stats':stats, 'matches':matches, 'ranks':ranks, 'common':common_ladders, 'invite':invite_ladders } )
 
 @login_required
 def message_list( request ) :

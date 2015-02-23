@@ -109,7 +109,7 @@ def single_ladder_details(request, ladder):
         challengables = []
 
     match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
-    open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
+    open_challenges = Challenge.objects.filter(challenger = request.user.id, ladder = ladder).filter(accepted = 0).order_by('-deadline')
     return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
@@ -204,7 +204,8 @@ def leave_ladder(request, ladder_slug):
 
     # If GET: display confirmation of the leave
     if request.method == 'GET':
-        return render_to_response('confirm_leave.html', {"ladder":ladder}, context_instance=RequestContext(request))
+        challenges = Challenge.objects.filter( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(accepted = Challenge.STATUS_NOT_ACCEPTED) ).count()
+        return render_to_response('confirm_leave.html', {"ladder":ladder,"challenges":challenges}, context_instance=RequestContext(request))
 
     # If POST and user is unranked: abort
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
