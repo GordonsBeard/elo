@@ -12,13 +12,9 @@ from itertools import chain
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 
 def _open_challenges_exist(user, ladder):
-    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
-        user    = User object
-        ladder  = Ladder object (optional)
-        statuses = Tuple of challenge statuses (see ladder views)
-    """
+    """Returns True if there are challenges open in the provided ladder for the user."""
 
-    open_challenges = Challenge.objects.filter( ( ( Q( challenger=user ) | Q( challengee=user ) ) & Q( ladder = ladder ) ) & Q( accepted = Challenge.STATUS_ACCEPTED ) | Q( accepted = Challenge.STATUS_NOT_ACCEPTED ) )
+    open_challenges = Challenge.objects.filter( (Q(challenger=user)|Q(challengee=user)) & (Q(accepted = Challenge.STATUS_ACCEPTED) | Q(accepted = Challenge.STATUS_NOT_ACCEPTED)) & Q(ladder = ladder) )
 
     if open_challenges.count() > 0:
         return True
