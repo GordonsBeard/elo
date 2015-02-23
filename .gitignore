@@ -85,4 +85,4 @@ nosetests.xml
 venv/
 dbase/
 migrations/
-settings.py
+elo/settings.py
