@@ -24,7 +24,7 @@ def profile( request, username ) :
   ranks       = [(r,r.ladder.latest_match()) for r in ladders[:PROFILE_ACTIVE_LADDERS]]
 
   # Get common ladders
-  if request.user.is_authenticated and not user == request.user :
+  if request.user.is_authenticated() and not user == request.user :
     common_ladders  = [r.ladder for r in ladders if r.ladder.rank_set.filter( player = request.user ).count()]
     invite_ladders  = [r.ladder for r in request.user.rank_set.order_by( 'ladder__name' ) if not r.ladder.rank_set.filter( player = user ).count()]
   else :
