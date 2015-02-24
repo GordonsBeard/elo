@@ -82,7 +82,7 @@ class PagingInfo :
 
     def set_item_count( self, item_count ) :
         # We add 2 to the range end because ranges are exclusive and we're 1 based
-        range_end       = ceil( item_count / self.page_length ) + 3
+        range_end       = ceil( item_count / self.page_length ) + 2
         self.page_list  = range( 1, int( range_end ) )
         return self.page_list
 
