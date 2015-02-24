@@ -1,6 +1,7 @@
 # coding=UTF-8
 from django.db.models import Q
 from ladder.models import Challenge, Rank
+from math import ceil
 
 def _open_challenges_exist(user, ladder):
     """Returns True if there are challenges open in the provided ladder for the user."""
@@ -73,9 +74,27 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
 
 # TODO: test this
 # It should wrap a view function with automatic paging support
-def paged( fn, default_length ) :
+class PagingInfo :
+    def __init__( self, page, page_length ) :
+        self.page        = page
+        self.page_length = page_length
+        self.page_list   = None
+
+    def set_item_count( self, item_count ) :
+        # We add 2 to the range end because ranges are exclusive and we're 1 based
+        range_end       = ceil( item_count / self.page_length ) + 3
+        self.page_list  = range( 1, int( range_end ) )
+        return self.page_list
+
+    def get_item_slice( self ) :
+        firstel = ( self.page - 1 ) * self.page_length
+        return slice( firstel, firstel + self.page_length )
+
+def paged( fn ) :
     def _paged_viewfn( request, *args, **kwargs ) :
-        page = request.GET['p'] if request.method == "GET" and request.GET.has_key( 'p' ) else 1
-        page_length = request.GET['l'] if request.method == "GET" and request.GET.has_key( 'l' ) else default_length
-        return fn( request, page = page, page_length = page_length, *args, **kwargs )
+        page        = request.GET['p'] if request.method == "GET" and request.GET.has_key( 'p' ) else 1
+        page_length = request.GET['l'] if request.method == "GET" and request.GET.has_key( 'l' ) else 25
+        page_info   = PagingInfo( page = page, page_length = page_length )
+
+        return fn( request, page_info = page_info, *args, **kwargs )
     return _paged_viewfn

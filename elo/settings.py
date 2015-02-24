@@ -91,10 +91,10 @@ SITE_ID = 1
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/' #TODO: Setup when deployed
+#STATIC_ROOT = '/home/gordon/public/laddr.org/elo/static/'
 
-# Steam API key (get your own here: http://steamcommunity.com/dev/apikey)
-STEAM_API_KEY = '87B1E6B2C33AA7850637787CF4BAC545'
+# Steam API key
+STEAM_API_KEY = '814067A8BFCFB8EF4713794859E0738F'
 
 # Authentification for OpenID
 AUTHENTICATION_BACKENDS = (
@@ -124,7 +124,6 @@ OPENID_USE_AS_ADMIN_LOGIN = True
 AUTH_PROFILE_MODULE = 'elo.UserProfile'
 
 # To allow sub-domain cross-site authenticating
-# Change to 127.0.0.1 for local testing
-CSRF_COOKIE_DOMAIN = '.laddr.org'
+CSRF_COOKIE_DOMAIN = '127.0.0.1'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'

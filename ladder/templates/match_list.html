@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+{% load paging_tags %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+<h1>{{ ladder.name }} - Match History</h1>
+
+<div id="match_list">
+    {% if matches %}
+    <table>
+    <tr>
+        <th>Date</th>
+        <th colspan="2">Challenger</th>
+        <th></th>
+        <th colspan="2">Defender</th>
+        <th>Winner</th>
+        <th></th>
+    </tr>
+    {% for match in matches %}
+    <tr>
+        <td>{{ match.date_complete }}</td>
+        <td><img src="{{ match.challenger.userprofile.avatar }}" /></td>
+        <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a>{% if match.challenger_rank %} [{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]{% endif %}</td>
+        <td><strong>vs</strong></td>
+        <td><img src="{{ match.challengee.userprofile.avatar }}" /></td>
+        <td><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a>{% if match.challengee_rank %} [{{ match.challengee_rank }}{{ match.get_challengee_rank_icon_display }}]{% endif %}</td>
+        <td><img src="{{ match.winner.userprofile.avatar }}" /></td>
+        <td><em><a href="{% url 'user:profile' match.winner.username %}">{{ match.winner.userprofile.handle }}</a></em>{% if match.winner_rank %} [{{ match.winner_rank }}{{ match.get_winner_rank_icon_display }}]{% endif %}</td>
+        <td><a href="{% url 'ladder:match_detail' ladder.slug match.id %}">Details</a>
+    </tr>
+    {% endfor %}
+    </table>
+    {% else %}
+    <p>No matches have been recorded for this ladder.</p><br/>
+    <p>Matches will appear when players challenge each other.</p>
+    {% endif %}
+</div>
+<p class="page_list">{% page_list pageinfo ladder:match_list ladder.slug %}</p><br />
+
+<div id="back_block">
+    <a href="{% url 'ladder:detail' ladder.slug %}">&lt;&lt; Back to {{ ladder.name }} rankings</a>
+</div>
+{% endblock content %}

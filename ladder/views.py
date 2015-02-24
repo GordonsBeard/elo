@@ -10,7 +10,7 @@ from django import forms
 from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
-from ladder.helpers import _open_challenges_exist, _get_valid_targets
+from ladder.helpers import _open_challenges_exist, _get_valid_targets, paged
 
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
@@ -85,10 +85,15 @@ def index(request, ladder_slug = None):
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
 
-def match_list( request, ladder_slug ) :
+@paged
+def match_list( request, ladder_slug, page_info ) :
     # TODO: Implement this
     # Show a (paged) list of all matches on the ladder
-    pass;
+    ladder          = Ladder.objects.get( slug = ladder_slug )
+    matches         = Match.objects.filter( ladder = ladder ).order_by( '-date_complete' )[page_info.get_item_slice()]
+    page_info.set_item_count( Match.objects.filter( ladder = ladder ).count() )
+
+    return render_to_response('match_list.html', { 'ladder':ladder, 'pageinfo':page_info, 'matches':matches }, context_instance=RequestContext(request))
 
 def match_detail( request, ladder_slug, match_id ) :
     # TODO: Implement this
