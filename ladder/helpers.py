@@ -76,8 +76,8 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
 # It should wrap a view function with automatic paging support
 class PagingInfo :
     def __init__( self, page, page_length ) :
-        self.page        = page
-        self.page_length = page_length
+        self.page        = int( page )
+        self.page_length = int( page_length )
         self.page_list   = None
 
     def set_item_count( self, item_count ) :
