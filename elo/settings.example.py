@@ -124,9 +124,9 @@ OPENID_USE_AS_ADMIN_LOGIN = True
 AUTH_PROFILE_MODULE = 'elo.UserProfile'
 
 # We use the request preprocessor to pull out the current url from within template tags
-from django.conf.global_settings import TEMPLATE_CONTEXT_PREPROCESSORS
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
-TEMPLATE_CONTEXT_PREPROCESSORS = TEMPLATE_CONTEXT_PREPROCESSORS + (
+TEMPLATE_CONTEXT_PROCESSORS = TEMPLATE_CONTEXT_PROCESSORS + (
     'django.core.context_processors.request',
 )
 
