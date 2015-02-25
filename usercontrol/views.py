@@ -88,15 +88,15 @@ def message_matches( request ) :
 
       match     = Match.objects.get( pk = notice_id )
       if action == "challenger_wins" :
-        match.winner = match.challenger
+        match.choose_winner( match.challenger )
       elif action == "challengee_wins" :
-        match.winner = match.challengee
+        match.choose_winner( match.challengee )
       elif action == "forfeit" :
         match.forfeit = True
         if request.user == match.challenger :
-          match.winner = match.challengee
+          match.choose_winner( match.challengee )
         else :
-          match.winner = match.challenger
+          match.choose_winner( match.challenger )
 
       match.save()
     except AttributeError :

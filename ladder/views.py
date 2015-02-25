@@ -40,7 +40,7 @@ def single_ladder_details(request, ladder):
         join_link = False
         challengables = []
 
-    match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
+    match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')[:25]
     open_challenges = Challenge.objects.filter(challenger = request.user.id, ladder = ladder).filter(accepted = 0).order_by('-deadline')
     return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
@@ -48,7 +48,7 @@ def list_all_ladders(request):
     """Retrieve info on all the ladders."""
 
     # List of all ladders includes match and rank info as well.
-    match_list = Match.objects.all().order_by('-date_complete')
+    match_list = Match.objects.all().order_by('-date_complete')[:25]
     rank_list = Rank.objects.all()
     ladder_list = Ladder.objects.all()
 

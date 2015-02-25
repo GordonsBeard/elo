@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
@@ -46,7 +47,7 @@ class Ladder(models.Model):
 
     def ranked_players(self):
         """Gets number of players on ladder."""
-        return Rank.objects.filter(ladder=self).count()
+        return Rank.objects.filter( ladder = self ).count()
 
     def save(self, force_insert=False, force_update=False, using=None):
         self.slug = slugify(self.name)
@@ -60,6 +61,9 @@ class Ladder(models.Model):
         if not matches :
             return "Never"
         return matches.date_challenged
+
+    def is_user_ranked( self, user ) :
+        return user.rank_set.get( ladder = self ) != None
 
     def __unicode__(self):
         return "{0} ({1})".format(self.name, self.game.name)
@@ -134,12 +138,28 @@ class Challenge(models.Model):
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
+    def accept(self):
+        self.accepted = Challenge.STATUS_ACCEPTED
+
+    def forfeit(self):
+        self.accepted = Challenge.STATUS_FORFEIT
+
+    def postpone(self):
+        self.accepted = Challenge.STATUS_POSTPONED
+
+    def complete(self):
+        self.accepted = Challenge.STATUS_COMPLETED
+
+    def cancel(self):
+        self.accepted = Challenge.STATUS_CANCELLED
+
     def save(self, *args, **kwargs):
-        ladder = Ladder.objects.get(pk=self.ladder.pk)
-        if ladder.response_timeout > 0:
-            self.deadline = datetime.datetime.utcnow().replace(tzinfo=utc) + datetime.timedelta(days=ladder.response_timeout)
-        else:
-            self.deadline = None
+        if not self.deadline :
+            ladder = self.ladder
+            if ladder.response_timeout > 0 :
+                self.deadline = datetime.datetime.utcnow().replace(tzinfo=utc) + datetime.timedelta(days=ladder.response_timeout)
+            else:
+                self.deadline = None
 
         # At this point we should have all the data we need to save the
         # Challenge object. Just a couple of players, a ladder and deadline.
@@ -186,12 +206,30 @@ class Match(models.Model):
         verbose_name_plural = "Matches"
         verbose_name = "Match"
 
+    def choose_winner( self, winner ) :
+        if isinstance( winner, int ) :
+            if winner == 0 :
+                self.winner = self.challenger
+            elif winner == 1 :
+                self.winner = self.challengee
+            else :
+                raise ValueError( "choose_winner accepts either a user, 0, or 1" )
+        elif isinstance( winner, User ) :
+            if winner != self.challenger and winner != self.challengee :
+                raise ValueError( "the winner of a match must be either the challenger or the challengee" )
+            self.winner = winner
+        else :
+            raise TypeError( "choose_winner accepts integers or users, not {}".format( type(winner) ) )
+
     def save(self, *args, **kwargs):
         if self.winner:
             # With the winner mark the related challenge as "Completed"
-            if self.related_challenge.accepted in (Challenge.STATUS_NOT_ACCEPTED,Challenge.STATUS_ACCEPTED):
+            if self.related_challenge.accepted == Challenge.STATUS_ACCEPTED:
                 # As long as the match wasn't forfeit of course.
-                self.related_challenge.accepted = Challenge.STATUS_COMPLETED if not self.forfeit else Challenge.STATUS_FORFEIT
+                if self.forfeit :
+                    self.related_challenge.forfeit()
+                else :
+                    self.related_challenge.complete()
                 self.related_challenge.save(*args, **kwargs)
 
             # Because there is a winner, mark the Match object as complete
@@ -199,16 +237,9 @@ class Match(models.Model):
             self.date_complete = datetime.datetime.utcnow().replace(tzinfo=utc)
 
             # Record the winner's rank & icon on the Match object.
-
-            current_ladder_ranks = Rank.objects.filter(ladder=self.ladder).count()
-
-            challenger_rank, _created = Rank.objects.get_or_create(ladder=self.ladder, player=self.challenger, defaults={'rank':current_ladder_ranks+1, 'arrow':'0'})
-            challengee_rank, _created = Rank.objects.get_or_create(ladder=self.ladder, player=self.challengee, defaults={'rank':current_ladder_ranks+2, 'arrow':'0'})
-
-
             # If the challenger is the winner, give them the challengee's rank
             # (if higher)
-            self.winner_rank = challengee_rank.rank if challenger_rank.rank > challengee_rank.rank else challenger_rank.rank
+            self.winner_rank = self.challengee_rank if self.challenger_rank > self.challengee_rank else self.challenger_rank
             self.winner_rank_icon = u'0'
 
         super(Match, self).save(*args, **kwargs)
@@ -285,41 +316,46 @@ def adjust_rank(instance, sender, **kwargs):
             # failed?
             return
 
-        winner = instance.challenger if instance.challenger == instance.winner else instance.challengee
-        loser = instance.challenger if instance.challengee == instance.winner else instance.challengee
+        # Having two if statements like this is faster than having a single if/else for some reason
+        winner  = instance.challenger if instance.challenger == instance.winner else instance.challengee
+        loser   = instance.challenger if instance.challengee == instance.winner else instance.challengee
 
-        ladder = instance.ladder
+        ladder  = instance.ladder
 
         # Get current number of people ranked on the ladder.
-        rankings = Rank.objects.filter(ladder=ladder).count()
+        rankings = ladder.ranked_players()
 
-        if rankings>0:
-            # The ladder is already initialized.
+        # if rankings>0:
+        #     # The ladder is already initialized.
 
-            # Now that we have a winner we need to give people actual ranks.
-            # If they don't have one, give them the current rankings +1.
-            # Challenger gets ranked higher by default because THEMS THE BREAKS
-            defaults = {'rank':rankings+1, 'arrow':Rank.ARROW_DOWN,}
-            winner_rank, _created = Rank.objects.get_or_create(player=winner, ladder=ladder, defaults=defaults)
-            loser_rank, _created = Rank.objects.get_or_create(player=loser, ladder=ladder, defaults=defaults)
+        #     # Now that we have a winner we need to give people actual ranks.
+        #     # If they don't have one, give them the current rankings +1.
+        #     # Challenger gets ranked higher by default because THEMS THE BREAKS
+        #     defaults = {'rank':rankings+1, 'arrow':Rank.ARROW_DOWN,}
+        #     winner_rank, _created = Rank.objects.get_or_create(player=winner, ladder=ladder, defaults=defaults)
+        #     loser_rank, _created = Rank.objects.get_or_create(player=loser, ladder=ladder, defaults=defaults)
 
-            # If winner is lower down on the ladder than loser
-            if winner_rank.rank > loser_rank.rank:
-                old_winner_rank = winner_rank.rank
-                old_loser_rank = loser_rank.rank
+        # We should never allow unranked players to get this far
+        winner_rank = Rank.objects.only('rank').get( player = winner, ladder = ladder )
+        loser_rank  = Rank.objects.only('rank').get( player = loser,  ladder = ladder )
 
-                # This swaps the ranks
-                winner_rank.rank = old_loser_rank
-                loser_rank.rank = old_winner_rank
+        # If the winner is lower down on the ladder than the loser
+        if winner_rank.rank > loser_rank.rank :
+            old_winner_rank = winner_rank.rank
+            old_loser_rank  = loser_rank.rank
 
-            # Loser gets an up arrow if they are at the bottom of the list.
-            loser_rank.arrow = Rank.ARROW_DOWN if loser_rank.rank < rankings else Rank.ARROW_UP
+            # This swaps the ranks
+            winner_rank.rank = old_loser_rank
+            loser_rank.rank  = old_winner_rank
 
-            # Winner always gets an up arrow.
-            winner_rank.arrow = Rank.ARROW_UP
+        # Loser gets an up arrow if they are at the bottom of the list.
+        loser_rank.arrow = Rank.ARROW_DOWN if loser_rank.rank < rankings else Rank.ARROW_UP
 
-            winner_rank.save()
-            loser_rank.save()
+        # Winner always gets an up arrow.
+        winner_rank.arrow = Rank.ARROW_UP
+
+        winner_rank.save()
+        loser_rank.save()
 
 # After updating a Match, if there is a winner, adjust relevant Ranks
 post_save.connect(adjust_rank, sender = Match)
