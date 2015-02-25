@@ -87,5 +87,6 @@
 </tr>
 {% endif %}
 {% endfor %}
-</table>
+</table><br />
+<a href="{% url 'ladder:match_list' ladder.slug %}">See all</a>
 {% endblock content %}
