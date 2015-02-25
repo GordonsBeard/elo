@@ -45,7 +45,7 @@
     <p>Matches will appear when players challenge each other.</p>
     {% endif %}
 </div>
-<p class="page_list">{% page_list pageinfo ladder:match_list ladder.slug %}</p><br />
+<p class="page_list">{% page_list pageinfo %}</p><br />
 
 <div id="back_block">
     <a href="{% url 'ladder:detail' ladder.slug %}">&lt;&lt; Back to {{ ladder.name }} rankings</a>

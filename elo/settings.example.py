@@ -123,6 +123,13 @@ OPENID_USE_AS_ADMIN_LOGIN = True
 # Extend user profiles using this model
 AUTH_PROFILE_MODULE = 'elo.UserProfile'
 
+# We use the request preprocessor to pull out the current url from within template tags
+from django.conf.global_settings import TEMPLATE_CONTEXT_PREPROCESSORS
+
+TEMPLATE_CONTEXT_PREPROCESSORS = TEMPLATE_CONTEXT_PREPROCESSORS + (
+    'django.core.context_processors.request',
+)
+
 # To allow sub-domain cross-site authenticating
 CSRF_COOKIE_DOMAIN = '127.0.0.1'    # Set this to your domain
 
