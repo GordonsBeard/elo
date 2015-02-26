@@ -84,7 +84,7 @@ def message_challenges( request ) :
 
     # status = 2, 3, 4
     # Completed, Forfeit, Postponed
-    past_challenges = challenges.filter( Q( challenger = request.user )|Q( challengee = request.user ) ).filter( Q( accepted = 2 )|Q( accepted = 3 )|Q( accepted = 4 ) )
+    past_challenges = challenges.filter( Q( challenger = request.user )|Q( challengee = request.user ) ).filter( Q( accepted = 2 )|Q( accepted = 3 )|Q( accepted = 4 ) )[:25]
 
     return render( request, "challenges.html", { 'open_challenges':open_challenges, 'pending_challenges': pending_challenges, 'past_challenges':past_challenges } )
 
