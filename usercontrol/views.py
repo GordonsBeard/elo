@@ -2,9 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, render_to_response
+from django.template import RequestContext
 from ladder.models import Rank, Challenge, Match
-from ladder.helpers import _get_user_challenges
+from ladder.helpers import _get_user_challenges, paged
 from datetime import datetime
 
 PROFILE_RECENT_MATCHES    = 5         # How many matches to show under the "Recent Matches" header
@@ -38,6 +39,14 @@ def profile( request, username ) :
         invite_ladders    = []
 
     return render( request, "profile.html", { 'userp':user, 'stats':stats, 'matches':matches, 'ranks':ranks, 'common':common_ladders, 'invite':invite_ladders } )
+@paged
+def match_list( request, username, page_info ) :
+    user            = get_object_or_404( User, username = username )
+    all_matches     = Match.objects.filter( Q( challenger = user ) | Q( challengee = user ) )
+    matches         = all_matches.order_by( '-date_complete' )[page_info.get_item_slice()]
+    page_info.set_item_count( all_matches.count() )
+
+    return render_to_response('user_match_list.html', { 'userp':user, 'pageinfo':page_info, 'matches':matches }, context_instance=RequestContext(request))
 
 @login_required
 def message_list( request ) :
