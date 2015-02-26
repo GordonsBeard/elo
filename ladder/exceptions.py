@@ -11,6 +11,9 @@ class ChallengeeOutOfRange( ChallengeValidationError ) :
 class ParticipantBusy( ChallengeValidationError ) :
     pass
 
+class PlayerNotInvolved( ChallengeValidationError ) :
+    pass
+
 class PlayerNotRanked( ChallengeValidationError ) :
     pass
 
