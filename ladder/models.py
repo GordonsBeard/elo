@@ -370,6 +370,11 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
                 player.rank -= 1
                 player.save()
 
+        lastPlace = remainingPlayers.order_by('rank').last()
+        if lastPlace.arrow == Rank.ARROW_DOWN :
+            lastPlace.arrow = Rank.ARROW_UP
+            lastPlace.save()
+
         # get a list of all non-completed challenges
         open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED) )
         for challenge in open_challenges:
