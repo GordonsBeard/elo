@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+
+{% block head %}{% endblock head %}
+
+{% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+<h1>{{ match.challenger.userprofile.handle }} vs. {{ match.challengee.userprofile.handle }}</h1>
+
+<div class="match_block" id="match_details">
+    <table>
+        <tr><td>Status:</td><td><strong>{{ match.related_challenge.get_accepted_display }}</strong></td></tr>
+        {% if match.winner %}<tr><td>Winner:</td><td><a href="{% url 'user:profile' match.winner.username %}">{{ match.winner.userprofile.handle }}</a> [{{ match.winner_rank }}{{ match.get_winner_rank_icon_display }}]</td></tr>{% endif %}
+        <tr><td>Started:</td><td>{{ match.date_challenged }} ({{ match.date_challenged|naturaltime }})</td></tr>
+        <tr><td>Finished:</td><td>{{ match.date_complete }} ({{ match.date_complete|naturaltime }})</td></tr>
+        <tr><td>Ladder:</td><td><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td></tr>
+    </table>
+</div>
+
+<div class="match_block" id="match_participants">
+    <table style="display:inline-block;">
+        <tr><th colspan="2">Challenger</th></tr>
+        <tr><td colspan="2"><img src="{{ match.challenger.userprofile.avatar }}"> <a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a></td></tr>
+        <tr><td>Rank Before:</td><td>[{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]</td></tr>
+        <tr><td>Character:</td><td>{{ match.character1 }}</td></tr>
+    </table>
+
+    <table style="display:inline-block;">
+        <tr><th colspan="2">Defender</th></tr>
+        <tr><td colspan="2"><img src="{{ match.challengee.userprofile.avatar }}"> <a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a></td></tr>
+        <tr><td>Rank Before:</td><td>[{{ match.challengee_rank }}{{ match.get_challengee_rank_icon_display }}]</td></tr>
+        <tr><td>Character:</td><td>{{ match.character2 }}</td></tr>
+    </table>
+</div>
+
+<div id="back_block">
+    <a href="{% url 'ladder:match_list' match.ladder.slug %}">&lt;&lt; Back to {{ match.ladder.name }} - Match History</a>
+</div>
+{% endblock content %}

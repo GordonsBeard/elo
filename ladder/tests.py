@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.db import transaction
 from django.db.models import Q
 from django.test import Client, TestCase, RequestFactory
 from django.utils.importlib import import_module
@@ -10,10 +11,42 @@ from django.utils.importlib import import_module
 # Modules to tests less or more
 from ladder.models import Challenge, Ladder, Game, Rank, Match
 from ladder.views import join_ladder, leave_ladder, issue_challenge
+from ladder.exceptions import ChallengeeOutOfRange, ChallengeeIsChallenger, PlayerNotRanked, ParticipantBusy
+
+from datetime import datetime
+from random import random, seed
 
 # Needed for tests to run in VS
 import django
 django.setup()
+
+def generate_random_valid_challenge( ladder ) :
+    valid_challengers = ladder.rank_set.exclude( rank = 1 )
+    challenger        = valid_challengers.order_by('?')[0] # '?' ordering is random
+
+    if challenger.arrow == u'0' :
+        valid_challengees = ladder.rank_set.filter( rank__lt = challenger.rank, rank__gt = challenger.rank - int( ladder.up_arrow ) - 1 )
+    else :
+        valid_challengees = ladder.rank_set.filter( rank__gt = challenger.rank, rank__lt = challenger.rank + int( ladder.down_arrow ) + 1 )
+
+    challengee = valid_challengees.order_by('?')[0]
+
+    return Challenge.objects.create( challenger = challenger.player, challengee = challengee.player, ladder = ladder )
+
+def generate_random_completed_match( ladder ) :
+    challenge = generate_random_valid_challenge( ladder )
+    challenge.accept()
+    challenge.save()
+
+    match = ladder.match_set.get( related_challenge = challenge )
+
+    if random() < 0.5 :
+        match.choose_winner( 0 )
+    else :
+        match.choose_winner( 1 )
+    match.save()
+    return match
+
 
 ## Tests to Implement:
 # User should not be able to issue challenge with an open challenge
@@ -71,14 +104,16 @@ class Test_Ladder_Objects(TestCase):
     def setUp(self):
 
         # users
-        self.user = User.objects.create_user(username='TestUser 1', email='test1@test.com',  password='test')
+        self.users = []
+        for i in range(10) :
+            self.users.append( User.objects.create_user(username="test_user_{}".format(i), email="test{}@test.com".format(i), password='test') )
 
         # game (Test Game [tg]) and ladder (default settings)
         self.game = Game.objects.create(name = "Test Game", abv = "tg")
 
     def test_ladder_creation(self):
         """ Tests that ladder was created with default settings. """
-        test_ladder = Ladder.objects.create(owner = self.user, game = self.game, name = "Test Party Ladder")
+        test_ladder = Ladder.objects.create(owner = self.users[0], game = self.game, name = "Test Party Ladder")
         self.assertEqual(test_ladder.max_players, '0')
         self.assertEqual(test_ladder.privacy, '0')
         self.assertEqual(test_ladder.signups, True)
@@ -88,7 +123,83 @@ class Test_Ladder_Objects(TestCase):
         self.assertEqual(test_ladder.challenge_cooldown, None)
         self.assertEqual(test_ladder.response_timeout, '3')
         self.assertEqual(test_ladder.name, 'Test Party Ladder')
-        self.assertEqual(test_ladder.owner, self.user)
+        self.assertEqual(test_ladder.owner, self.users[0])
+
+    def test_ladder_membership(self):
+        test_ladder = Ladder.objects.create(owner = self.users[0], game = self.game, name = "Test Party Ladder")
+        test_rank   = Rank.objects.create(player = self.users[0], rank = 1, arrow = 0, ladder = test_ladder)
+        self.assertEqual(test_ladder.is_user_ranked(self.users[0]), True)
+
+    def test_ladder_challenges(self):
+        test_ladder = Ladder.objects.create(owner = self.users[0], game = self.game, name = "Test Party Ladder")
+        def _add_player_to_test_ladder( player ) :
+            return Rank.objects.create( player = player, rank = test_ladder.rank_set.all().count() + 1, arrow = 0, ladder = test_ladder )
+
+        def _create_challenge( challenger, challengee ) :
+            return Challenge.objects.create( challenger = challenger, challengee = challengee, ladder = test_ladder )
+
+        test_rank_1 = _add_player_to_test_ladder( self.users[0] )
+        test_rank_2 = _add_player_to_test_ladder( self.users[1] )
+        test_rank_3 = _add_player_to_test_ladder( self.users[2] )
+        test_rank_4 = _add_player_to_test_ladder( self.users[3] )
+
+        self.assertEqual(test_ladder.latest_match(), "Never")
+
+        challenge_1 = _create_challenge( self.users[1], self.users[0] )
+        challenge_1.accept()
+        challenge_1.save()
+
+        self.assertEqual(test_ladder.match_set.all().count(), 1)
+        latest_match = test_ladder.latest_match()
+        self.assertEqual(latest_match, Match.objects.get( related_challenge = challenge_1 ).date_challenged)
+
+        challenge_2 = _create_challenge( self.users[3], self.users[2] )
+        challenge_2.accept()
+        challenge_2.save()
+
+class Test_Ladder_Validation( TestCase ) :
+    def _add_user_to_ladder( self, user ) :
+        return Rank.objects.create( player = user, rank = self.ladder.rank_set.count() + 1, arrow = Rank.ARROW_UP, ladder = self.ladder )
+
+    def _create_user( self, i ) :
+        return User.objects.create_user( username = "TestUser%d" % i, email = "test%d@test.com" % i, password = 'test' )
+
+    def setUp( self ) :
+        self.users  = [self._create_user( i ) for i in range( 10 )]
+
+        self.game   = Game.objects.create( name = "Test Game", abv = "tg" )
+        self.ladder = Ladder.objects.create( name = "Test Ladder", owner = self.users[0], game = self.game )
+
+    def test_basic_valid_challenge( self ) :
+        test_rank_1 = self._add_user_to_ladder( self.users[0] )
+        test_rank_2 = self._add_user_to_ladder( self.users[1] )
+
+        self.assertRaises( ChallengeeIsChallenger, lambda: Challenge.objects.create( challenger = self.users[0], challengee = self.users[0], ladder = self.ladder ) )
+        self.assertRaises( ChallengeeOutOfRange, lambda: Challenge.objects.create( challenger = self.users[0], challengee = self.users[1], ladder = self.ladder ) )
+        self.assertRaises( PlayerNotRanked, lambda: Challenge.objects.create( challenger = self.users[0], challengee = self.users[2], ladder = self.ladder ) )
+        self.assertIsNotNone( Challenge.objects.create( challenger = self.users[1], challengee = self.users[0], ladder = self.ladder ) )
+
+    def test_large_ladder_challenge( self ) :
+        for u in self.users :
+            self._add_user_to_ladder( u )
+        Rank.objects.get( ladder = self.ladder, player = self.users[1] ).arrow = Rank.ARROW_DOWN
+
+        self.assertRaises( ChallengeeOutOfRange, lambda: Challenge.objects.create( challenger = self.users[9], challengee = self.users[0], ladder = self.ladder ) )
+        self.assertRaises( ChallengeeOutOfRange, lambda: Challenge.objects.create( challenger = self.users[1], challengee = self.users[9], ladder = self.ladder ) )
+        self.assertIsNotNone( Challenge.objects.create( challenger = self.users[5], challengee = self.users[4], ladder = self.ladder ) )
+        self.assertRaises( ParticipantBusy, lambda: Challenge.objects.create( challenger = self.users[6], challengee = self.users[4], ladder = self.ladder ) )
+        self.assertIsNotNone( Challenge.objects.create( challenger = self.users[2], challengee = self.users[0], ladder = self.ladder ) )
+        self.assertIsNotNone( Challenge.objects.create( challenger = self.users[9], challengee = self.users[8], ladder = self.ladder ) )
+        self.assertIsNotNone( Challenge.objects.create( challenger = self.users[3], challengee = self.users[1], ladder = self.ladder ) )
+
+    def test_random_challenges( self ) :
+        for u in self.users :
+            self._add_user_to_ladder( u )
+
+        for _ in range( 20 ) :
+            challenge = generate_random_valid_challenge( self.ladder )
+            self.assertIsNotNone( challenge )
+            challenge.delete()
 
 class Test_Ladder_Views(TestCase):
     def setUp(self):

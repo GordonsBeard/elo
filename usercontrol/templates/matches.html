@@ -10,46 +10,46 @@
 <h1>Open Matches</h1>
 <table class="table_noborder">
 {% if matches %}
-  <tr>
-    <th>Date</th>
-    <th colspan="2">Challenger</th>
-    <th></th>
-    <th colspan="2">Defender</th>
-    <th>Ladder</th>
-  </tr>
+    <tr>
+        <th>Date</th>
+        <th colspan="2">Challenger</th>
+        <th></th>
+        <th colspan="2">Defender</th>
+        <th>Ladder</th>
+    </tr>
 {% for match in matches %}
-  <tr>
-    <td>{{ match.date_challenged|naturaltime }}</td>
-    <td><img src="{{ match.challenger.userprofile.avatar }}"></td>
-    <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a></td>
-    <td><strong>vs</strong></td>
-    <td><img src="{{ match.challengee.userprofile.avatar }}"></td>
-    <td><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a></td>
-    <td><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td>
-    <td>
-      <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="note_id" value="{{ match.pk }}">
-        <input type="hidden" name="action" value="challenger_wins">
-        <input type="submit" value="{{ match.challenger.userprofile.handle }} Wins">
-      </form>
-      <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="note_id" value="{{ match.pk }}">
-        <input type="hidden" name="action" value="challengee_wins">
-        <input type="submit" value="{{ match.challengee.userprofile.handle }} Wins">
-      </form>
-      <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="note_id" value="{{ match.pk }}">
-        <input type="hidden" name="action" value="forfeit">
-        <input type="submit" value="Forfeit This Match">
-      </form>
-    </td>
-  </tr>
+    <tr>
+        <td>{{ match.date_challenged|naturaltime }}</td>
+        <td><img src="{{ match.challenger.userprofile.avatar }}"></td>
+        <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a></td>
+        <td><strong>vs</strong></td>
+        <td><img src="{{ match.challengee.userprofile.avatar }}"></td>
+        <td><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a></td>
+        <td><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td>
+        <td>
+            <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="note_id" value="{{ match.pk }}">
+                <input type="hidden" name="action" value="challenger_wins">
+                <input type="submit" value="{{ match.challenger.userprofile.handle }} Wins">
+            </form>
+            <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="note_id" value="{{ match.pk }}">
+                <input type="hidden" name="action" value="challengee_wins">
+                <input type="submit" value="{{ match.challengee.userprofile.handle }} Wins">
+            </form>
+            <form style="display:inline-block;" action="{% url 'user:message_matches' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="note_id" value="{{ match.pk }}">
+                <input type="hidden" name="action" value="forfeit">
+                <input type="submit" value="Forfeit This Match">
+            </form>
+        </td>
+    </tr>
 {% endfor %}
 {% else %}
-  <li>No new matches.</li>
+    <ul><li>No new matches.</li></ul>
 {% endif %}
 </table>
 

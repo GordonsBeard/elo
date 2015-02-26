@@ -34,7 +34,7 @@
         <td colspan="2"></td>
         <th>Player</th>
     </tr>
-    {% for player_rank in rank_list %}   
+    {% for player_rank, player_busy in rank_list %}   
         <tr>
             <td>{{ player_rank.rank|ordinal }}</td>
             <td>{% if player_rank.rank != 1 %}{{ player_rank.get_arrow_display }}{% endif %}</td>
@@ -46,7 +46,7 @@
                 <input type="hidden" name="challenger" value="{{ user.pk }}" />
                 <input type="hidden" name="challengee" value="{{ player_rank.player.pk }}" />
                 <input type="hidden" name="ladder" value="{{ ladder.slug }}" />
-                <input type="submit" value="CHALLENGE" {% if can_challenge %}disabled="disabled"{% endif %} />
+                <input type="submit" value="CHALLENGE" {% if can_challenge or player_busy %}disabled="disabled"{% endif %} />
                 </form>
                 {% endif %}
             </td>
@@ -59,7 +59,7 @@
 <h2>Open Challenges</h2>
 <ul>
     {% for challenge in open_challenges %}
-    <li><img src="{{ challenge.challenger.userprofile.avatar }}" />{% if challenge.challenger_rank %} [{{ challenge.challenger_rank }}{{ challenge.get_challenger_rank_icon_display }}]{% endif %}vs <img src="{{ challenge.challengee.userprofile.avatar }}" />{% if challenge.challengee_rank %} [{{ challenge.challengee_rank }}{{ challenge.get_challengee_rank_icon_display }}]{% endif %}{% if challenge.deadline %} <em>{{ challenge.deadline|naturaltime }}</em>{% endif %}</li>
+    <li><img src="{{ challenge.challenger.userprofile.avatar }}" />{% if challenge.challenger_rank %} [{{ challenge.challenger_rank }}{{ challenge.get_challenger_rank_icon_display }}]{% endif %}vs <img src="{{ challenge.challengee.userprofile.avatar }}" />{% if challenge.challengee_rank %} [{{ challenge.challengee_rank }}{{ challenge.get_challengee_rank_icon_display }}]{% endif %}{% if challenge.deadline %} Expires: <em>{{ challenge.deadline|naturaltime }}</em>{% endif %}</li>
     {% endfor %}
 </ul>
 {% endif %}
@@ -87,5 +87,6 @@
 </tr>
 {% endif %}
 {% endfor %}
-</table>
+</table><br />
+<a href="{% url 'ladder:match_list' ladder.slug %}">See all</a>
 {% endblock content %}

@@ -4,88 +4,20 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render, render_to_response
+from django.shortcuts import redirect, render, render_to_response, get_object_or_404
 from django.template import RequestContext
 from django import forms
 from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
-
-def _open_challenges_exist(user, ladder):
-    """Returns True if there are challenges open in the provided ladder for the user."""
-
-    open_challenges = Challenge.objects.filter( (Q(challenger=user)|Q(challengee=user)) & (Q(accepted = Challenge.STATUS_ACCEPTED) | Q(accepted = Challenge.STATUS_NOT_ACCEPTED)) & Q(ladder = ladder) )
-
-    if open_challenges.count() > 0:
-        return True
-    else:
-        return False
-
-def _get_user_challenges(user, ladder = None, statuses = None):
-    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
-        user    = User object
-        ladder  = Ladder object (optional)
-        statuses = Tuple of challenge statuses (see ladder views)
-    """
-
-    # Grab the challenges from a user without filters
-    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
-
-    # Narrow it down to a single ladder if provided.
-    if ladder is not None:
-        open_challenges = open_challenges.filter( ladder = ladder )
-
-    # Narrow it down to statuses requested
-    if statuses is not None:
-        for status in statuses:
-            open_challenges = open_challenges.filter( accepted = status )
-
-    return open_challenges
-
-def _get_valid_targets(user, user_rank, allTargets, ladder):
-    """Takes a Rank QueryObject and returns a list of challengable ranks in the ladder.
-
-        You are allowed to challenge if:
-            - User is on the ladder. (checked beforehand)
-            - User has no open challenges in this ladder.
-            - User's (/w ▲) target is within current rank - UPARROW range.
-            - User's (/w ▼) target is within current rank + DNARROW range.
-            - User has not challenged target since TIMEOUT time has passed. *NOT IMPLEMENTED
-    """
-    # list of ranks player can challenge
-    challengables = []
-
-    # user has no open challenges in this ladder
-    open_challenges = _get_user_challenges(user, ladder, (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED)).count()
-
-    # Get user's arrow and rank
-    user_arrow = user_rank.arrow
-    user_nrank = user_rank.rank
-
-    # get the constraints for this ladder
-    up_distance = ladder.up_arrow
-    dn_distance = ladder.down_arrow
-
-    # Get the range of ranks to search between
-    if user_arrow == Rank.ARROW_UP :
-        r_range = (user_nrank - up_distance, user_nrank - 1)
-    elif user_arrow == Rank.ARROW_DOWN :
-        r_range = (user_nrank + 1, user_nrank + dn_distance)
-    else :
-        raise ValueError( 'Rank.arrow can be either "0" (Up Arrow) or "1" (Down Arrow), but was "{}"'.format( user_arrow ) )
-
-    # Get all ranks on the ladder within our target range
-    for target_rank in Rank.objects.filter(ladder = ladder,rank__range = r_range) :
-        challengables.append(target_rank.rank)
-
-    return challengables
+from ladder.helpers import _open_challenges_exist, _get_valid_targets, paged
+from ladder.exceptions import ChallengeValidationError
 
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
     
     # get the raw ranking list
-    rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')
-    
+    rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')  
 
     # if user is logged in
     if request.user.is_authenticated():
@@ -108,15 +40,16 @@ def single_ladder_details(request, ladder):
         join_link = False
         challengables = []
 
-    match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')
-    open_challenges = Challenge.objects.filter(challenger = request.user.id).filter(accepted = 0).order_by('-deadline')
+    rank_list       = [(r, _open_challenges_exist( r.player, ladder )) for r in rank_list] 
+    match_list      = Match.objects.filter(ladder = ladder).order_by('-date_complete')[:25]
+    open_challenges = Challenge.objects.filter(challenger = request.user.id, ladder = ladder).filter(accepted = 0).order_by('-deadline')
     return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
     """Retrieve info on all the ladders."""
 
     # List of all ladders includes match and rank info as well.
-    match_list = Match.objects.all().order_by('-date_complete')
+    match_list = Match.objects.all().order_by('-date_complete')[:25]
     rank_list = Rank.objects.all()
     ladder_list = Ladder.objects.all()
 
@@ -152,6 +85,24 @@ def index(request, ladder_slug = None):
     else:
         all_ladders = list_all_ladders(request)
         return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
+
+@paged
+def match_list( request, ladder_slug, page_info ) :
+    # TODO: Implement this
+    # Show a (paged) list of all matches on the ladder
+    ladder          = Ladder.objects.get( slug = ladder_slug )
+    matches         = Match.objects.filter( ladder = ladder ).order_by( '-date_complete' )[page_info.get_item_slice()]
+    page_info.set_item_count( Match.objects.filter( ladder = ladder ).count() )
+
+    return render_to_response('match_list.html', { 'ladder':ladder, 'pageinfo':page_info, 'matches':matches }, context_instance=RequestContext(request))
+
+def match_detail( request, ladder_slug, match_id ) :
+    # TODO: Implement this
+    # Show details about the match defined by match_id
+    ladder          = get_object_or_404( Ladder, slug = ladder_slug )
+    match           = get_object_or_404( Match, id = match_id, ladder = ladder )
+
+    return render_to_response('match_details.html', { 'match':match }, context_instance=RequestContext(request))
 
 def _user_already_ranked(user, ladder):
     """Returns true if user exists on ladder."""
@@ -204,7 +155,8 @@ def leave_ladder(request, ladder_slug):
 
     # If GET: display confirmation of the leave
     if request.method == 'GET':
-        return render_to_response('confirm_leave.html', {"ladder":ladder}, context_instance=RequestContext(request))
+        challenges = Challenge.objects.filter( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(accepted = Challenge.STATUS_NOT_ACCEPTED) ).count()
+        return render_to_response('confirm_leave.html', {"ladder":ladder,"challenges":challenges}, context_instance=RequestContext(request))
 
     # If POST and user is unranked: abort
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
@@ -237,9 +189,13 @@ def issue_challenge(request):
             messages.error(request, u"You have open challenges, you cannot challenge at this time.")
         else:
             # Generate a challenge
-            challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
-            challenge.save()
-            messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+            try :
+                challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+                challenge.save()
+                messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+            except ChallengeValidationError as e :
+                messages.error( request, "An error occurred: {}".format( str(e) ) )
+                return HttpResponseRedirect('/l/{0}'.format( ladder_slug ))
 
         return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 

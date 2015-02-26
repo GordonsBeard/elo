@@ -49,7 +49,7 @@
     <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a></td>
     <td><strong>vs</strong></td>
     <td><img src="{{ match.challengee.userprofile.avatar }}" /></td>
-    <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challengee.userprofile.handle }}</a></td>
+    <td><a href="{% url 'user:profile' match.challengee.username %}">{{ match.challengee.userprofile.handle }}</a></td>
     <td><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td>
     <td><img src="{{ match.winner.userprofile.avatar }}" /></td>
 </tr>

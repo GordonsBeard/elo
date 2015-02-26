@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'e54t54355s4di68@bdbajegui458&&5d4s/b38*54'
+SECRET_KEY = 'YOUR SECRET KEY GOES HERE'    # Remember to change this
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -91,10 +91,10 @@ SITE_ID = 1
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/' #TODO: Setup when deployed
+STATIC_ROOT = '/'   # Change this when deployed
 
-# Steam API key (get your own here: http://steamcommunity.com/dev/apikey)
-STEAM_API_KEY = '87B1E6B2C33AA7850637787CF4BAC545'
+# Steam API key
+STEAM_API_KEY = 'CHANGE ME TO YOUR STEAM KEY!!!!!!!!' # Get one at http://steamcommunity.com/dev/apikey
 
 # Authentification for OpenID
 AUTHENTICATION_BACKENDS = (
@@ -123,8 +123,14 @@ OPENID_USE_AS_ADMIN_LOGIN = True
 # Extend user profiles using this model
 AUTH_PROFILE_MODULE = 'elo.UserProfile'
 
+# We use the request preprocessor to pull out the current url from within template tags
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
+
+TEMPLATE_CONTEXT_PROCESSORS = TEMPLATE_CONTEXT_PROCESSORS + (
+    'django.core.context_processors.request',
+)
+
 # To allow sub-domain cross-site authenticating
-# Change to 127.0.0.1 for local testing
-CSRF_COOKIE_DOMAIN = '.laddr.org'
+CSRF_COOKIE_DOMAIN = '127.0.0.1'    # Set this to your domain
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'

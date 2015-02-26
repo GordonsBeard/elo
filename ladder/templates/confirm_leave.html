@@ -12,9 +12,12 @@
     {% endfor %}
 </ul>
 
-Are you sure you want to leave the ladder: <u>{{ ladder.name }}</u>?<br />
+<p>Are you sure you want to leave the ladder: <u>{{ ladder.name }}</u>?</p>
+{% if challenges %}
+<p>You have {{ challenges }} open or pending challenges on this ladder. <a href="{% url 'user:message_challenges' %}">Show Challenges</a></p>
+{% endif %}
 <br />
-<strong>Leaving this ladder CANNOT BE <u>UNDONE</u> and everyone ranked below you will be moved up a rank.</strong>
+<p><strong>Leaving this ladder CANNOT BE <u>UNDONE</u> and everyone ranked below you will be moved up a rank.</strong></p>
 <br />
 <form action="/l/{{ ladder.slug }}/leave/" method="post">
     {% csrf_token %}
