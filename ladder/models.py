@@ -51,6 +51,27 @@ def _can_challenge_user( challenger, challengee, ladder ) :
 
     return True
 
+def _get_user_challenges(user, ladder = None, statuses = None):
+    """Get all the challenges from a specified user (challenger or challengee). When no ladder statuses passed along, returns all challenges.
+        user    = User object
+        ladder  = Ladder object (optional)
+        statuses = Tuple of challenge statuses (see ladder views)
+    """
+
+    # Grab the challenges from a user without filters
+    open_challenges = Challenge.objects.filter((Q(challengee = user) | Q(challenger = user)))
+
+    # Narrow it down to a single ladder if provided.
+    if ladder is not None:
+        open_challenges = open_challenges.filter( ladder = ladder )
+
+    # Narrow it down to statuses requested
+    if statuses is not None:
+        for status in statuses:
+            open_challenges = open_challenges.filter( accepted = status )
+
+    return open_challenges
+
 class Game(models.Model):
     name    = models.CharField(max_length=50)
     abv     = models.CharField(max_length=10)

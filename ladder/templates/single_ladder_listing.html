@@ -59,7 +59,7 @@
 <h2>Open Challenges</h2>
 <ul>
     {% for challenge in open_challenges %}
-    <li><img src="{{ challenge.challenger.userprofile.avatar }}" />{% if challenge.challenger_rank %} [{{ challenge.challenger_rank }}{{ challenge.get_challenger_rank_icon_display }}]{% endif %}vs <img src="{{ challenge.challengee.userprofile.avatar }}" />{% if challenge.challengee_rank %} [{{ challenge.challengee_rank }}{{ challenge.get_challengee_rank_icon_display }}]{% endif %}{% if challenge.deadline %} <em>{{ challenge.deadline|naturaltime }}</em>{% endif %}</li>
+    <li><img src="{{ challenge.challenger.userprofile.avatar }}" />{% if challenge.challenger_rank %} [{{ challenge.challenger_rank }}{{ challenge.get_challenger_rank_icon_display }}]{% endif %}vs <img src="{{ challenge.challengee.userprofile.avatar }}" />{% if challenge.challengee_rank %} [{{ challenge.challengee_rank }}{{ challenge.get_challengee_rank_icon_display }}]{% endif %}{% if challenge.deadline %} Expires: <em>{{ challenge.deadline|naturaltime }}</em>{% endif %}</li>
     {% endfor %}
 </ul>
 {% endif %}
