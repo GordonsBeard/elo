@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render, render_to_response
+from django.shortcuts import redirect, render, render_to_response, get_object_or_404
 from django.template import RequestContext
 from django import forms
 from itertools import chain
@@ -99,7 +99,10 @@ def match_list( request, ladder_slug, page_info ) :
 def match_detail( request, ladder_slug, match_id ) :
     # TODO: Implement this
     # Show details about the match defined by match_id
-    pass;
+    ladder          = get_object_or_404( Ladder, slug = ladder_slug )
+    match           = get_object_or_404( Match, id = match_id, ladder = ladder )
+
+    return render_to_response('match_details.html', { 'match':match }, context_instance=RequestContext(request))
 
 def _user_already_ranked(user, ladder):
     """Returns true if user exists on ladder."""
