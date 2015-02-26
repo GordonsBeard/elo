@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
@@ -85,7 +86,7 @@ def message_challenges( request ) :
         except KeyError :
             messages.error( request, "Not enough information to complete request." )
         except PlayerNotInvolved :
-            messages.error( request, "Challenge not found" )
+            messages.error( request, "Challenge not found." )
 
     challenges = _get_user_challenges( request.user )
 
@@ -117,16 +118,19 @@ def message_matches( request ) :
                 if action == "challenger_wins" :
                     match.choose_winner( match.challenger )
                     match.save()
-                    messages.success( request, "You entered your results for your match against {} successfully".format( other.userprofile.handle ) )
+                    messages.success( request, "You entered your results for your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
                 elif action == "challengee_wins" :
                     match.choose_winner( match.challengee )
                     match.save()
-                    messages.success( request, "You entered your results for your match against {} successfully".format( other.userprofile.handle ) )
+                    messages.success( request, "You entered your results for your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
                 elif action == "forfeit" :
                     match.forfeit = True
                     match.choose_winner( other )
                     match.save()
-                    messages.success( request, "You forfeited your match against {} successfully".format( other.userprofile.handle ) )
+                    messages.success( request, "You forfeited your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
             else:
                 raise PlayerNotInvolved()
         except AttributeError :
