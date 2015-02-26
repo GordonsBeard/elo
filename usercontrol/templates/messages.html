@@ -10,8 +10,8 @@
 <h1>Inbox</h1>
 
 <ul>
-  <li><a href="{% url 'user:message_challenges' %}">{{ num_challenges }} Open Challenge{{ num_challenges|pluralize }}</a></li>
-  <li><a href="{% url 'user:message_matches' %}">{{ num_matches }} Open Match{{ num_matches|pluralize:"es" }}</a></li>
+    <li><a href="{% url 'user:message_challenges' %}">{{ num_challenges }} Open Challenge{{ num_challenges|pluralize }}</a></li>
+    <li><a href="{% url 'user:message_matches' %}">{{ num_matches }} Open Match{{ num_matches|pluralize:"es" }}</a></li>
 </ul>
 
 {% endblock content %}
