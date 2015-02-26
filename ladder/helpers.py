@@ -47,9 +47,6 @@ def _get_valid_targets(user, user_rank, allTargets, ladder):
     # list of ranks player can challenge
     challengables = []
 
-    # user has no open challenges in this ladder
-    open_challenges = _get_user_challenges(user, ladder, (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED)).count()
-
     # Get user's arrow and rank
     user_arrow = user_rank.arrow
     user_nrank = user_rank.rank

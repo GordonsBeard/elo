@@ -11,13 +11,13 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 from ladder.helpers import _open_challenges_exist, _get_valid_targets, paged
+from ladder.exceptions import ChallengeValidationError
 
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
     
     # get the raw ranking list
-    rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')
-    
+    rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')  
 
     # if user is logged in
     if request.user.is_authenticated():
@@ -40,7 +40,8 @@ def single_ladder_details(request, ladder):
         join_link = False
         challengables = []
 
-    match_list = Match.objects.filter(ladder = ladder).order_by('-date_complete')[:25]
+    rank_list       = [(r, _open_challenges_exist( r.player, ladder )) for r in rank_list] 
+    match_list      = Match.objects.filter(ladder = ladder).order_by('-date_complete')[:25]
     open_challenges = Challenge.objects.filter(challenger = request.user.id, ladder = ladder).filter(accepted = 0).order_by('-deadline')
     return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
@@ -185,9 +186,13 @@ def issue_challenge(request):
             messages.error(request, u"You have open challenges, you cannot challenge at this time.")
         else:
             # Generate a challenge
-            challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
-            challenge.save()
-            messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+            try :
+                challenge = Challenge( challenger=challenger, challengee=challengee, ladder=ladder )
+                challenge.save()
+                messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
+            except ChallengeValidationError as e :
+                messages.error( request, "An error occurred: {}".format( str(e) ) )
+                return HttpResponseRedirect('/l/{0}'.format( ladder_slug ))
 
         return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 

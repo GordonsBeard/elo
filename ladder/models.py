@@ -7,6 +7,49 @@ from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
 from django.template.defaultfilters import slugify
 from django.utils.timezone import utc
+from ladder.exceptions import ParticipantBusy, PlayerNotRanked, ChallengeeOutOfRange, ChallengeeIsChallenger
+
+def _can_challenge_user( challenger, challengee, ladder ) :
+    """ This function validates a challenge before it is saved """
+    # Make sure the challengee is actually unique
+    if challenger == challengee :
+        raise ChallengeeIsChallenger( "you cannot challenge yourself" )
+
+    # Attempt to get the ranks of the participants
+    try :
+        challenger_rank = Rank.objects.get( ladder = ladder, player = challenger )
+        challengee_rank = Rank.objects.get( ladder = ladder, player = challengee )
+    except ObjectDoesNotExist :
+        # Rank couldn't be retrieved, but both players must be ranked
+        raise PlayerNotRanked( "either the challenger {} or challengee {} is not ranked on the ladder {}".format( challenger, challengee, ladder ), ladder )
+
+    # Make sure the participants aren't already busy with another challenge
+    active_ladder_challenges = Challenge.objects.filter( ladder = ladder ).filter( Q(accepted = Challenge.STATUS_ACCEPTED) | Q(accepted = Challenge.STATUS_NOT_ACCEPTED) )
+    active_ladder_challenges = active_ladder_challenges.exclude( challenger = challenger, challengee = challengee ) # Exclude ourselves
+    if      active_ladder_challenges.filter( Q( challenger = challenger ) | Q( challengee = challenger ) ) :
+        raise ParticipantBusy( "cannot issue a new challenge with open challenges already", challenger )
+    elif    active_ladder_challenges.filter( Q( challenger = challengee ) | Q( challengee = challengee ) ) :
+        raise ParticipantBusy( "cannot issue a challenge to a player already busy with another challenge", challengee )
+
+    # Find the difference between ranks
+    rankdiff = challenger_rank.rank - challengee_rank.rank
+
+    # Make sure the ranks are different
+    if rankdiff == 0 :
+        raise ChallengeeOutOfRange( "challengee and challenger are equally ranked at {}".format( challenger_rank.rank ), rankdiff )
+
+    # Check that the target of the challenge is within the ladder's specified range
+    if challenger_rank.arrow == Rank.ARROW_UP :
+        if rankdiff < 0 or rankdiff > int( ladder.up_arrow ) :
+            raise ChallengeeOutOfRange( "challengee is ranked {}, which can't be challenged from {}".format( challengee_rank.rank, challenger_rank.rank ), rankdiff )
+    elif challenger_rank.arrow == Rank.ARROW_DOWN :
+        if rankdiff > 0 or -rankdiff > int( ladder.down_arrow ) :
+            raise ChallengeeOutOfRange( "challengee is ranked {}, which can't be challenged from {}".format( challengee_rank.rank, challenger_rank.rank ), rankdiff )
+    else :
+        # Somehow the challenger has an invalid arrow
+        raise ValueError( "challenger arrow {} is invalid".format( challenger_rank.arrow ) )
+
+    return True
 
 class Game(models.Model):
     name    = models.CharField(max_length=50)
@@ -154,10 +197,13 @@ class Challenge(models.Model):
         self.accepted = Challenge.STATUS_CANCELLED
 
     def save(self, *args, **kwargs):
+        # Check that our challenge is actually valid
+        _can_challenge_user( self.challenger, self.challengee, self.ladder )
+
         if not self.deadline :
             ladder = self.ladder
             if ladder.response_timeout > 0 :
-                self.deadline = datetime.datetime.utcnow().replace(tzinfo=utc) + datetime.timedelta(days=ladder.response_timeout)
+                self.deadline = datetime.datetime.utcnow().replace(tzinfo=utc) + datetime.timedelta(days=int(ladder.response_timeout))
             else:
                 self.deadline = None
 
