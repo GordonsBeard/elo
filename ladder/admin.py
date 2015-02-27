@@ -32,18 +32,15 @@ class MatchAdmin(admin.ModelAdmin):
 
 class RankAdmin(admin.ModelAdmin):
     ordering = ('ladder', 'rank')
-    #list_display = ('player_name', 'rank', 'arrow', 'game')
-    #list_filter = ('game',)
-    #def player_name(self, obj):
-    #    up = UserProfile.objects.get(user=obj.player)
-    #    return up.handle
-
 
 class GameAdmin(admin.ModelAdmin):
     readonly_fields=('slug',)
+
+class ChallengeAdmin(admin.ModelAdmin):
+    fields = ('ladder', 'challenger', 'challengee', 'date_issued', 'deadline', 'accepted', 'note')
 
 admin.site.register(Match, MatchAdmin)
 admin.site.register(Rank, RankAdmin)
 admin.site.register(Game, GameAdmin)
 admin.site.register(Ladder, LadderAdmin)
-admin.site.register(Challenge)
+admin.site.register(Challenge, ChallengeAdmin)

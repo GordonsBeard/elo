@@ -193,6 +193,7 @@ class Challenge(models.Model):
 
     challenger  = models.ForeignKey('auth.User', related_name='challenge_challenger')
     challengee  = models.ForeignKey('auth.User', related_name='challenge_challengee')
+    date_issued = models.DateTimeField()
     deadline    = models.DateTimeField('Challenge Expires', null=True, blank=True)
     accepted    = models.CharField(max_length=2, choices=CHALLENGE_RESPONSES, blank=False, default=0)
     ladder      = models.ForeignKey(Ladder, blank=True)
@@ -220,12 +221,17 @@ class Challenge(models.Model):
         # Check that our challenge is actually valid
         _can_challenge_user( self.challenger, self.challengee, self.ladder )
 
+        # Setup the deadline based on the ladder's timeout
         if not self.deadline :
             ladder = self.ladder
             if ladder.response_timeout > 0 :
                 self.deadline = datetime.datetime.utcnow().replace(tzinfo=utc) + datetime.timedelta(days=int(ladder.response_timeout))
             else:
                 self.deadline = None
+
+        # Set the date_issued to right now
+        if not self.date_issued:
+            self.date_issued = datetime.datetime.now()
 
         # At this point we should have all the data we need to save the
         # Challenge object. Just a couple of players, a ladder and deadline.
