@@ -165,7 +165,6 @@ class Rank(models.Model):
     class Meta:
         verbose_name_plural = "Rankings"
         verbose_name        = "Rank"
-        unique_together     = ["rank", "ladder"]
 
     player  = models.ForeignKey('auth.User')
     rank    = models.IntegerField()
@@ -198,6 +197,8 @@ class Challenge(models.Model):
     accepted    = models.CharField(max_length=2, choices=CHALLENGE_RESPONSES, blank=False, default=0)
     ladder      = models.ForeignKey(Ladder, blank=True)
     note        = models.TextField(blank=True, null=True)
+
+    #match       = models.OneToOneField(Match)
 
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
@@ -348,7 +349,7 @@ class Match(models.Model):
     loser_id                = property( get_loser_id )
 
     forfeit                 = models.BooleanField(blank=False, default=False)
-    related_challenge       = models.ForeignKey(Challenge)
+    related_challenge       = models.OneToOneField(Challenge)
 
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
