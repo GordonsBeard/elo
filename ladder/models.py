@@ -198,8 +198,6 @@ class Challenge(models.Model):
     ladder      = models.ForeignKey(Ladder, blank=True)
     note        = models.TextField(blank=True, null=True)
 
-    #match       = models.OneToOneField(Match)
-
     def __unicode__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
