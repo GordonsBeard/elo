@@ -13,6 +13,8 @@ urlpatterns = [
 
     url(r'^create$', ladder.views.create_ladder, prefix='ladder.views'),
 
+    url(r'^add_game$', ladder.views.add_game, prefix='ladder.views'),
+
     url(r'^(?P<ladder_slug>[-\w]+)/join/$', ladder.views.join_ladder, prefix='ladder.views'),
 
     url(r'^(?P<ladder_slug>[-\w]+)/leave/$', ladder.views.leave_ladder, prefix='ladder.views'),

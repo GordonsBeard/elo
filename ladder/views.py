@@ -240,3 +240,25 @@ def create_ladder(request):
     else:
         form = CreateLadderForm(initial={'owner': request.user.pk})
     return render_to_response("create_ladder.html", {'form': form}, context_instance=RequestContext(request))
+
+@login_required
+def add_game(request):
+    class AddGameForm(forms.ModelForm):
+        class Meta:
+            model = Game
+            fields = ['name', 'abv', 'icon']
+
+    if request.method == 'POST':
+        form = AddGameForm(request.POST)
+
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            abv = form.cleaned_data['abv']
+            icon = form.cleaned_data['icon']
+
+            newGame = Game.objects.create(name = name, abv = abv, icon = icon)
+            messages.success(request, "Game added: {0}".format(newGame.name))
+            return HttpResponseRedirect('/l/create')
+    else:
+        form = AddGameForm()
+    return render_to_response("add_game.html", {'form': form}, context_instance=RequestContext(request))

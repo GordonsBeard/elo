@@ -5,9 +5,16 @@
 
 
 {% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
 <form action="/l/create" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit" />
+    <a href="/l/add_game">+ Add a game</a>
 </form>
 {% endblock content %}
