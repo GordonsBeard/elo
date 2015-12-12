@@ -1,4 +1,4 @@
-from django.contrib import messages
+﻿from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -77,7 +77,9 @@ def message_challenges( request ) :
                 else :
                     messages.error( request, "Invalid command" )
             elif challenge.challenger == request.user :
-                # TO-DO add cancel challenge action
+                if action == "cancel_challenge" :
+                    challenge.cancel()
+                    messages.success( request, "You canceled the challenge against {}".format( challenge.challenger.userprofile.handle ) )
                 pass
             else :
                 raise PlayerNotInvolved()

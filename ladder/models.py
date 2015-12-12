@@ -216,6 +216,7 @@ class Challenge(models.Model):
 
     def cancel(self):
         self.accepted = Challenge.STATUS_CANCELLED
+        self.delete()
 
     def save(self, *args, **kwargs):
         # Check that our challenge is actually valid
@@ -236,6 +237,10 @@ class Challenge(models.Model):
         # At this point we should have all the data we need to save the
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
+
+        if self.accepted == Challenge.STATUS_CANCELLED:
+            object = Challenge.objects.get(self)
+            object.delete()
 
         if self.accepted == Challenge.STATUS_ACCEPTED:
             """
