@@ -21,7 +21,7 @@ def _can_challenge_user( challenger, challengee, ladder ) :
         challengee_rank = Rank.objects.get( ladder = ladder, player = challengee )
     except ObjectDoesNotExist :
         # Rank couldn't be retrieved, but both players must be ranked
-        raise PlayerNotRanked( "either the challenger {} or challengee {} is not ranked on the ladder {}".format( challenger, challengee, ladder ), ladder )
+        raise PlayerNotRanked( "either the challenger {} or challengee {} is not ranked on the ladder".format( challenger, challengee, ladder ), ladder )
 
     # Make sure the participants aren't already busy with another challenge
     active_ladder_challenges = Challenge.objects.filter( ladder = ladder ).filter( Q(accepted = Challenge.STATUS_ACCEPTED) | Q(accepted = Challenge.STATUS_NOT_ACCEPTED) )
@@ -47,7 +47,7 @@ def _can_challenge_user( challenger, challengee, ladder ) :
             raise ChallengeeOutOfRange( "challengee is ranked {}, which can't be challenged from {}".format( challengee_rank.rank, challenger_rank.rank ), rankdiff )
     else :
         # Somehow the challenger has an invalid arrow
-        raise ValueError( "challenger arrow {} is invalid".format( challenger_rank.arrow ) )
+        raise ValueError( "challenger arrow is invalid", challenger_rank.arrow )
 
     return True
 

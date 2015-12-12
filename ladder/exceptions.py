@@ -1,26 +1,19 @@
 
 class ChallengeValidationError( Exception ) :
-    def __init__( self, error ) :
-       self.value = error
-
-    def __str__( self ) :
-        return repr( self.value )
+    pass
 
 class ChallengeeIsChallenger( ChallengeValidationError ) :
     pass
 
 class ChallengeeOutOfRange( ChallengeValidationError ) :
-    def __init__( self, error, rankdiff ) :
-        self.value    = error
-        self.rankdiff = rankdiff
+    pass
 
 class ParticipantBusy( ChallengeValidationError ) :
-    def __init__( self, error, user ) :
-        self.value = error
-        self.user  = user
+    pass
+
+class PlayerNotInvolved( ChallengeValidationError ) :
+    pass
 
 class PlayerNotRanked( ChallengeValidationError ) :
-    def __init__( self, error, ladder ) :
-        self.value  = error
-        self.ladder = ladder
+    pass
 

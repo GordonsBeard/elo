@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
 from ladder.models import Rank, Challenge, Match, _get_user_challenges
 from ladder.helpers import paged
+from ladder.exceptions import PlayerNotInvolved
 from datetime import datetime
 
 PROFILE_RECENT_MATCHES    = 5         # How many matches to show under the "Recent Matches" header
@@ -62,15 +64,29 @@ def message_challenges( request ) :
             notice_id = request.POST['note_id']
 
             challenge = Challenge.objects.get( pk = notice_id )
-            if action == "accept_challenge" :
-                challenge.accepted = Challenge.STATUS_ACCEPTED
-            elif action == "decline_challenge" :
-                challenge.accepted = Challenge.STATUS_FORFEIT
-            challenge.save()
+
+            if challenge.challengee == request.user :
+                if action == "accept_challenge" :
+                    challenge.accept()
+                    challenge.save()
+                    messages.success( request, "You accepted the challenge against {}".format( challenge.challenger.userprofile.handle ) )
+                elif action == "decline_challenge" :
+                    challenge.forfeit()
+                    challenge.save()
+                    messages.success( request, "You forfeited the challenge against {}".format( challenge.challenger.userprofile.handle ) )
+                else :
+                    messages.error( request, "Invalid command" )
+            elif challenge.challenger == request.user :
+                # TO-DO add cancel challenge action
+                pass
+            else :
+                raise PlayerNotInvolved()
         except AttributeError :
-            messages.error( "Tried to use an invalid command. Tell a programmer." )
+            messages.error( request, "Tried to use an invalid command. Tell a programmer." )
         except KeyError :
-            messages.error( "Not enough information to complete request." )
+            messages.error( request, "Not enough information to complete request." )
+        except PlayerNotInvolved :
+            messages.error( request, "Challenge not found." )
 
     challenges = _get_user_challenges( request.user )
 
@@ -96,22 +112,33 @@ def message_matches( request ) :
             notice_id = request.POST['note_id']
 
             match     = Match.objects.get( pk = notice_id )
-            if action == "challenger_wins" :
-                match.choose_winner( match.challenger )
-            elif action == "challengee_wins" :
-                match.choose_winner( match.challengee )
-            elif action == "forfeit" :
-                match.forfeit = True
-                if request.user == match.challenger :
-                    match.choose_winner( match.challengee )
-                else :
-                    match.choose_winner( match.challenger )
+            other     = match.challenger if request.user == match.challengee else match.challengee
 
-            match.save()
+            if request.user == match.challenger or request.user == match.challengee :
+                if action == "challenger_wins" :
+                    match.choose_winner( match.challenger )
+                    match.save()
+                    messages.success( request, "You entered your results for your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
+                elif action == "challengee_wins" :
+                    match.choose_winner( match.challengee )
+                    match.save()
+                    messages.success( request, "You entered your results for your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
+                elif action == "forfeit" :
+                    match.forfeit = True
+                    match.choose_winner( other )
+                    match.save()
+                    messages.success( request, "You forfeited your match against {} successfully. <a href=\"{}\">View details</a>."
+                      .format( other.userprofile.handle, reverse( 'ladder:match_detail', args=(match.ladder.slug, match.id) ) ) )
+            else:
+                raise PlayerNotInvolved()
         except AttributeError :
-            messages.error( "Tried to use an invalid command. Tell a programmer." )
+            messages.error( request, "Tried to use an invalid command. Tell a programmer." )
         except KeyError :
-            messages.error( "Not enough information to complete request." )
+            messages.error( request, "Not enough information to complete request." )
+        except PlayerNotInvolved :
+            messages.error( request, "Match not found" )
 
     matches = Match.objects.filter( Q(winner__isnull = True) & ( Q(challengee = request.user) | Q(challenger = request.user) ) ).order_by( '-date_challenged' )
     return render( request, "matches.html", { 'matches':matches } )

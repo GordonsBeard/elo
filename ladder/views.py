@@ -11,7 +11,7 @@ from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
 from ladder.helpers import _open_challenges_exist, _get_valid_targets, paged
-from ladder.exceptions import ChallengeValidationError
+from ladder.exceptions import ChallengeValidationError, PlayerNotRanked
 
 def single_ladder_details(request, ladder):
     """Retrieve info on a single ladder."""
@@ -176,12 +176,27 @@ def issue_challenge(request):
     # If POST: confirm/issue challenge
     if request.POST != {}:
         # unpack post
-        challengee_id   = request.POST['challengee']
-        ladder_slug     = request.POST['ladder']
+        try :
+            challengee_id   = request.POST['challengee']
+            ladder_slug     = request.POST['ladder']
+        except KeyError :
+            messages.error( request, "POST data is incomplete, nice try hacker scum" )
+            return HttpResponseRedirect('/')
 
-        challenger      = request.user
-        challengee      = User.objects.get(pk = challengee_id)
-        ladder          = Ladder.objects.get(slug=ladder_slug)
+        try :
+            challenger      = request.user
+            challengee      = User.objects.get(pk = challengee_id)
+        except ObjectDoesNotExist :
+            messages.error( request, "Challenge target does not exist {}".format( challengee_id ) )
+            return HttpResponseRedirect('/l/{0}'.format( ladder_slug ))
+
+        try :
+            ladder          = Ladder.objects.get(slug=ladder_slug)
+            if not ladder.is_user_ranked( challenger ) :
+                raise PlayerNotRanked( "challenger isn't ranked on the ladder", ladder )
+        except ObjectDoesNotExist, PlayerNotRanked :
+            messages.error( request, "You cannot issue a challenge on the ladder {}".format( ladder_slug ) )
+            return HttpResponseRedirect('/')
 
         # Check for open challenges
 

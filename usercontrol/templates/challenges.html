@@ -6,6 +6,11 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|safe }}</li>
+    {% endfor %}
+</ul>
 
 <h2>Open Challenges</h2>
 <ul>
