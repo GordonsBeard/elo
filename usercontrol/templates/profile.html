@@ -63,7 +63,7 @@
         </tr>
         {% for match in matches %}
         <tr>
-            <td class="table_content">{{ match.date_complete|naturaltime }}</td>
+            <td class="table_content"><a href="{% url 'ladder:match_detail' match.ladder.slug match.id %}">{{ match.date_complete|naturaltime }}</a></td>
             <td class="table_content"><a href="{% url 'ladder:detail' match.ladder.slug %}">{{ match.ladder }}</a></td>
             {% if match.challenger_id == userp.id %}
                 <td class="table_content"><img src="{{ match.challengee.userprofile.avatar }}"></td>

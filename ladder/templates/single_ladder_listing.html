@@ -76,7 +76,7 @@
 {% for match in match_list %}
 {% if match.winner %}
 <tr>
-    <td>{{ match.date_complete|naturaltime }}</td>
+    <td><a href="{% url 'ladder:match_detail' match.ladder.slug match.id %}">{{ match.date_complete|naturaltime }}</a></td>
     <td><img src="{{ match.challenger.userprofile.avatar }}" /></td>
     <td><a href="{% url 'user:profile' match.challenger.username %}">{{ match.challenger.userprofile.handle }}</a>{% if match.challenger_rank %} [{{ match.challenger_rank }}{{ match.get_challenger_rank_icon_display }}]{% endif %}</td>
     <td><strong>vs</strong></td>
