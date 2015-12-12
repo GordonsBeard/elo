@@ -1,5 +1,5 @@
 # ELO Site files
 env/
-dbase/*
+.sqlite3
 migrations/
 elo/settings.py
