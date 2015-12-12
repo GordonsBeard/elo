@@ -238,10 +238,6 @@ class Challenge(models.Model):
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
 
-        if self.accepted == Challenge.STATUS_CANCELLED:
-            object = Challenge.objects.get(self)
-            object.delete()
-
         if self.accepted == Challenge.STATUS_ACCEPTED:
             """
             Once match is accepted, created the MATCH object and record the current stats.
