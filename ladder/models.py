@@ -359,7 +359,7 @@ class Match(models.Model):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
 def del_user_rank_adjustment(instance, sender, **kwargs):
-    """This updates all existing ranks on the ladder, and cancels all outstanding challenges."""
+    """ This updates all existing ranks on the ladder, and cancels all outstanding challenges. """
     
     if issubclass(sender, Rank):
         # get a list of the remaining players with a larger (worse) rank
@@ -376,9 +376,15 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
                 player.save()
 
         lastPlace = remainingPlayers.order_by('rank').last()
-        if lastPlace.arrow == Rank.ARROW_DOWN :
-            lastPlace.arrow = Rank.ARROW_UP
-            lastPlace.save()
+
+        # If the new last place has a down arrow, flip it up.
+        # if there is no last place, ignore that.
+        try:
+            if lastPlace.arrow == Rank.ARROW_DOWN:
+                lastPlace.arrow = Rank.ARROW_UP
+                lastPlace.save()
+        except AttributeError:
+            pass
 
         # get a list of all non-completed challenges
         open_challenges = _get_user_challenges( instance.player, ladder = instance.ladder, statuses = (Challenge.STATUS_NOT_ACCEPTED, Challenge.STATUS_ACCEPTED) )
