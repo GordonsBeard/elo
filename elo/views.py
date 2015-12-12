@@ -1,4 +1,4 @@
-import json, urllib
+﻿import json, urllib
 
 from django.conf import settings
 from django.contrib import messages
@@ -75,14 +75,11 @@ def login(request):
         userP = UserProfile.objects.get(steamid=steamid)
         user = User.objects.get(id=userP.user_id)
 
-        # Update their name
-        user.username = slugify(userP.handle)
-        user.save()
-
     # New user
     except UserOpenID.DoesNotExist:
-        # Slugify their name to get rid of shitty phone icons and unicode.
-        user = User.objects.create_user(username=slugify(handle), email='', password='!')
+        # Slugify their current display name, this will be used for internal control panels only.
+        slugName = "{0}-{1}".format(handle, steamid[len(steamid)-3:len(steamid)])
+        user = User.objects.create_user(username=slugName, email='', password='!')
         user.save()
         useroid = UserOpenID(user=user, claimed_id=claim, display_id=claim)
         useroid.save()
