@@ -1,14 +1,21 @@
-from django.conf.urls import patterns, include, url
+﻿from django.conf.urls import include, url
 from django.contrib import admin
+import ladder.views
 
 admin.autodiscover()
 
-urlpatterns = patterns('ladder.views',
-    url(r'^(?P<ladder_slug>[-\w]+)/$',       'index', name='detail'),
-    url(r'^(?P<ladder_slug>[-\w]+)/matches/$','match_list', name='match_list'),
-    url(r'^(?P<ladder_slug>[-\w]+)/matches/(?P<match_id>\d+)/$','match_detail', name='match_detail'),
-    url(r'^create$',                        'create_ladder'),
-    url(r'^(?P<ladder_slug>[-\w]+)/join/$',   'join_ladder'),
-    url(r'^(?P<ladder_slug>[-\w]+)/leave/$',  'leave_ladder'),
-    url(r'^challenge$',                     'issue_challenge', name='issue_challenge'),
-)
+urlpatterns = [
+    url(r'^(?P<ladder_slug>[-\w]+)/$', ladder.views.index, name='detail', prefix='ladder.views'),
+
+    url(r'^(?P<ladder_slug>[-\w]+)/matches/$', ladder.views.match_list,   name='match_list',  prefix='ladder.views'),
+
+    url(r'^(?P<ladder_slug>[-\w]+)/matches/(?P<match_id>\d+)/$', ladder.views.match_detail, name='match_detail',prefix='ladder.views'),
+
+    url(r'^create$', ladder.views.create_ladder, prefix='ladder.views'),
+
+    url(r'^(?P<ladder_slug>[-\w]+)/join/$', ladder.views.join_ladder, prefix='ladder.views'),
+
+    url(r'^(?P<ladder_slug>[-\w]+)/leave/$', ladder.views.leave_ladder, prefix='ladder.views'),
+
+    url(r'^challenge$', ladder.views.issue_challenge, name='issue_challenge', prefix='ladder.views'),
+]

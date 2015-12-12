@@ -1,11 +1,11 @@
-"""
+﻿"""
 Django settings for elo project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/1.7/topics/settings/
+https://docs.djangoproject.com/en/1.9/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.7/ref/settings/
+https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -14,7 +14,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'YOUR SECRET KEY GOES HERE'    # Remember to change this
@@ -22,15 +22,13 @@ SECRET_KEY = 'YOUR SECRET KEY GOES HERE'    # Remember to change this
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-TEMPLATE_DEBUG = True
-
 ALLOWED_HOSTS = []
 
+APPEND_SLASH = True
 
 # Application definition
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
-    # 'django.contrib.admindocs',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
@@ -38,16 +36,13 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'django_openid_auth',
-    # 'django_evolution',
-
     'ladder',
     'elo',
     'usercontrol',
-)
+]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,15 +50,30 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+]
 
 ROOT_URLCONF = 'elo.urls'
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
 WSGI_APPLICATION = 'elo.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+# https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -72,10 +82,29 @@ DATABASES = {
     }
 }
 
-# Internationalization
-# https://docs.djangoproject.com/en/1.7/topics/i18n/
+# Password validation
+# https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
-LANGUAGE_CODE = 'America/Chicago'
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/1.9/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
@@ -88,7 +117,7 @@ USE_TZ = True
 SITE_ID = 1
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.7/howto/static-files/
+# https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '/'   # Change this when deployed
@@ -97,10 +126,10 @@ STATIC_ROOT = '/'   # Change this when deployed
 STEAM_API_KEY = 'CHANGE ME TO YOUR STEAM KEY!!!!!!!!' # Get one at http://steamcommunity.com/dev/apikey
 
 # Authentification for OpenID
-AUTHENTICATION_BACKENDS = (
+AUTHENTICATION_BACKENDS = [
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
-)
+]
 
 # To create users automatically when a new OpenID is used
 OPENID_CREATE_USERS = True
@@ -118,19 +147,13 @@ OPENID_SSO_SERVER_URL = 'http://steamcommunity.com/openid'
 OPENID_FOLLOW_RENAMES = False
 
 # Lets admins log in via openid. NEED A NON-OPENID ADMIN FIRST
-OPENID_USE_AS_ADMIN_LOGIN = True
+# Once you have a SuperUser set, change this to True
+OPENID_USE_AS_ADMIN_LOGIN = False
 
 # Extend user profiles using this model
 AUTH_PROFILE_MODULE = 'elo.UserProfile'
 
-# We use the request preprocessor to pull out the current url from within template tags
-from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
-
-TEMPLATE_CONTEXT_PROCESSORS = TEMPLATE_CONTEXT_PROCESSORS + (
-    'django.core.context_processors.request',
-)
-
 # To allow sub-domain cross-site authenticating
-CSRF_COOKIE_DOMAIN = '127.0.0.1'    # Set this to your domain
+CSRF_COOKIE_DOMAIN = ''    # Set this to your domain (127.0.0.1 for testing)
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'

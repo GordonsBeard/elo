@@ -2,26 +2,27 @@ ELO
 ===
 Electronic Ladder Organizer
 
-Pronounced "E. L. O." as it's an actual acronym, unlike Elo.
+Allows users to create arbitrary ladders for any game they wish, and then challenge each other for positions on the ladder. 
 
-Things Used
------
-* [Django 1.7.4](https://www.djangoproject.com/)
-* [python-openid 2.2.5](https://github.com/openid/python-openid)
-* [django-openid-auth 0.5](https://pypi.python.org/pypi/django-openid-auth/)*
-* [Pillow 2.7.0](https://github.com/python-pillow/Pillow)
+*Pronounced "E. L. O." as it's an actual acronym, unlike Elo.*
+___
 
-Setup/Notes
---
-**django-openid-auth**: Due to a change in django 1.6, urls.py in django-openid-auth needs to be updated:
+To get setup:
 
-`django.conf.urls.defaults` should become `from django.conf.urls import patterns, url, include`
+* Rename and edit ``elo\settings.template.py`` to ``elo\settings.py``
+* Create databases ``> python manage.py migrate --run-syncdb``
+* Create superuser ``> python manage.py createsuperuser``
+* Update ``django-openid-auth/views.py``. Find all instances of ``request.REQUEST.`` and change to ``request.GET.``
+* *(optional)* Log in as Steam user, set this user as admin, then set ``OPENID_USE_AS_ADMIN_LOGIN`` to ``True``
+* *(optional)* Remove annoying warnings by updating ``django-openid-auth/urls.py``
+___
+    from __future__ import unicode_literals
 
-**dbase/**: Create this (empty) folder in the base directory.
+	from django.conf.urls import url
+	import django_openid_auth.views
 
-**elo/settings.py**: Add a secret key and change the `CSRF_COOKIE_DOMAIN` to `127.0.0.1`
-
-**Superuser** is not set up by default.
-You need a superuser before you can log in via Steam/OpenID: ``django-admin.py createsuperuser``.
-Edit ``elo\settings.py`` and change ``OPENID_USE_AS_ADMIN_LOGIN`` to ``FALSE``
-Then login as the superuser, give admin rights to an OpenID user and set ``OPENID_USE_AS_ADMIN_LOGIN`` back to ``True``.
+	urlpatterns = [
+		url(r'^login/$', django_openid_auth.views.login_begin, name='openid-login', prefix='django_openid_auth.views'),
+		url(r'^complete/$', django_openid_auth.views.login_complete, name='openid-complete', prefix='django_openid_auth.views'),
+		url(r'^logo.gif$', django_openid_auth.views.logo, name='openid-logo', prefix='django_openid_auth.views'),
+	]
