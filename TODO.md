@@ -1,11 +1,12 @@
 **To-Do**
 
-* Forfeiting challenge (From initial accept and results reporting)
+* Give it an actual stylesheet??
 * E-Mail alerting
 * Edit ladder info
 
 **Done**
 
+* Forfeiting challenge (From initial accept and results reporting)
 * Canceling challenge
 * Game creation
 * User creation via Steam
