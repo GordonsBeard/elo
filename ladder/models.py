@@ -238,7 +238,7 @@ class Challenge(models.Model):
         # Challenge object. Just a couple of players, a ladder and deadline.
         super(Challenge, self).save(*args, **kwargs)
 
-        if self.accepted == Challenge.STATUS_ACCEPTED:
+        if self.accepted == Challenge.STATUS_ACCEPTED or self.accepted == Challenge.STATUS_FORFEIT:
             """
             Once match is accepted, created the MATCH object and record the current stats.
             At this point we record the pre-match stats, so we need to get the players' current rank.
@@ -265,6 +265,14 @@ class Challenge(models.Model):
                         'challenger_rank': challenger_rank, 'challenger_rank_icon': challenger_arrow,
                         'challengee_rank': challengee_rank, 'challengee_rank_icon': challengee_arrow }
             new_match, created = Match.objects.get_or_create(related_challenge=self, ladder=self.ladder, defaults=defaults)
+
+            if self.accepted == Challenge.STATUS_FORFEIT:
+                """ 
+                If the match is forfeit upon receiving the Challenge, then immedietly mark this as a loss for the challengee.
+                """
+                new_match.forfeit = True
+                new_match.choose_winner( self.challenger )
+                new_match.save()
 
 class Match(models.Model):
     ARROW_UP    = u'0'
