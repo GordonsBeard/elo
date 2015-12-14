@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'ladder',
     'elo',
     'usercontrol',
+    'django_cron',
 ]
 
 MIDDLEWARE_CLASSES = [
