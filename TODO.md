@@ -1,8 +1,25 @@
 **To-Do**
 
-* Give it an actual stylesheet??
+Ladder:
+
+* Enforce time limits (django-cron)
 * E-Mail alerting
-* Edit ladder info
+* Twitter alerting
+* Add moderators
+* Add ladder options (time limits, description, etc)
+* Unlisted ladders
+* Invite only ladders
+
+User Control:
+
+* Switch to django-social-auth for logins
+* User control panel
+
+Design:
+
+* Implement boostrap
+
+___
 
 **Done**
 
