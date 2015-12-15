@@ -302,8 +302,14 @@ class Match(models.Model):
         else :
             raise TypeError( "choose_winner accepts integers or users, not {}".format( type(winner) ) )
 
-    def save(self, *args, **kwargs):
-        if self.winner:
+    def save(self, *args, **kwargs) :
+        # If there is a date_complete set, then abort the save, the results have already been logged.
+        # TODO: Check to see if there is a conflict in the reporting scores.
+        #       Raise a message alerting the user that their reporting was just dumped.
+        if self.date_complete is not None:
+            return
+
+        if self.winner :
             # With the winner mark the related challenge as "Completed"
             if self.related_challenge.accepted == Challenge.STATUS_ACCEPTED:
                 # As long as the match wasn't forfeit of course.
