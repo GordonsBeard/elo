@@ -1,3 +1,7 @@
+# Needed for tests to run in VS
+import django
+django.setup()
+
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import AnonymousUser, User
@@ -6,7 +10,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.db import transaction
 from django.db.models import Q
 from django.test import Client, TestCase, RequestFactory
-from django.utils.importlib import import_module
+from importlib import import_module
 
 # Modules to tests less or more
 from ladder.models import Challenge, Ladder, Game, Rank, Match
