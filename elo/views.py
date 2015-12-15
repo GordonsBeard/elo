@@ -78,7 +78,7 @@ def login(request):
     # New user
     except UserOpenID.DoesNotExist:
         # Slugify their current display name, this will be used for internal control panels only.
-        slugName = "{0}-{1}".format(handle, steamid[len(steamid)-3:len(steamid)])
+        slugName = "{0}-{1}".format(slugify(handle), steamid[len(steamid)-3:len(steamid)])
         user = User.objects.create_user(username=slugName, email='', password='!')
         user.save()
         useroid = UserOpenID(user=user, claimed_id=claim, display_id=claim)

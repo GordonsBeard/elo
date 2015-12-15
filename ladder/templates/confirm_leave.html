@@ -14,7 +14,11 @@
 
 <p>Are you sure you want to leave the ladder: <u>{{ ladder.name }}</u>?</p>
 {% if challenges %}
-<p>You have {{ challenges }} open or pending challenges on this ladder. <a href="{% url 'user:message_challenges' %}">Show Challenges</a></p>
+<p>CHALLENGES: You have {{ challenges }} open or pending challenges on this ladder. <a href="{% url 'user:message_challenges' %}">Show Challenges</a></p>
+<br/>
+{% endif %}
+{% if matches %}
+<p> You have an open match on this ladder! <a href="{% url 'user:message_matches' %}">Show Matches</a></p>
 {% endif %}
 <br />
 <p><strong>Leaving this ladder CANNOT BE <u>UNDONE</u> and everyone ranked below you will be moved up a rank.</strong></p>

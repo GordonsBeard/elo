@@ -1,17 +1,17 @@
+# Needed for tests to run in VS
+import django
+django.setup()
+
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.test import TestCase, RequestFactory       
 from django.test.client import Client
-from django.utils.importlib import import_module
+from importlib import import_module
 
 # Modules to test more or less
 from elo.models import UserProfile
-
-# Needed for tests to run in VS
-import django
-django.setup()
 
 class TestClient(Client):
 
@@ -83,7 +83,7 @@ class Test_Login_Views(TestCase):
                     "/l/challenge", 
                     "/l/create", 
                     )
-        expected_url = "http://testserver/openid/login/?next={0}"
+        expected_url = "/openid/login/?next={0}"
 
         for test_url in protected_urls:
             response = client.get( test_url )
