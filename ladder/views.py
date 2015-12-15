@@ -155,8 +155,9 @@ def leave_ladder(request, ladder_slug):
 
     # If GET: display confirmation of the leave
     if request.method == 'GET':
-        challenges = Challenge.objects.filter( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(accepted = Challenge.STATUS_NOT_ACCEPTED) ).count()
-        return render_to_response('confirm_leave.html', {"ladder":ladder,"challenges":challenges}, context_instance=RequestContext(request))
+        challenges  = Challenge.objects.filter  ( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(accepted = Challenge.STATUS_NOT_ACCEPTED) ).count()
+        matches     = Match.objects.filter( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(ladder = ladder) & Q(date_complete__isnull = True) ).count()
+        return render_to_response('confirm_leave.html', {"ladder":ladder,"challenges":challenges, "matches":matches}, context_instance=RequestContext(request))
 
     # If POST and user is unranked: abort
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):

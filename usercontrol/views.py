@@ -1,6 +1,7 @@
 ﻿from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, render_to_response
@@ -78,8 +79,11 @@ def message_challenges( request ) :
                     messages.error( request, "Invalid command" )
             elif challenge.challenger == request.user :
                 if action == "cancel_challenge" :
-                    challenge.cancel()
-                    messages.success( request, "You canceled the challenge against {}".format( challenge.challenger.userprofile.handle ) )
+                    if challenge.accepted == Challenge.STATUS_NOT_ACCEPTED :
+                        challenge.cancel()
+                        messages.success( request, "You canceled the challenge against {}".format( challenge.challengee.userprofile.handle ) )
+                    else:
+                        messages.warning( request, "The match has already been marked as {}".format( challenge.get_accepted_display() ) )
                 pass
             else :
                 raise PlayerNotInvolved()
@@ -88,6 +92,8 @@ def message_challenges( request ) :
         except KeyError :
             messages.error( request, "Not enough information to complete request." )
         except PlayerNotInvolved :
+            messages.error( request, "Challenge not found." )
+        except ObjectDoesNotExist :
             messages.error( request, "Challenge not found." )
 
     challenges = _get_user_challenges( request.user )
