@@ -158,3 +158,7 @@ AUTH_PROFILE_MODULE = 'elo.UserProfile'
 CSRF_COOKIE_DOMAIN = ''    # Set this to your domain (127.0.0.1 for testing)
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+
+CRON_CLASSES = [
+    'elo.cronjobs.ChallengeTimeouts',
+]
