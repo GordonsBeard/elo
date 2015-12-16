@@ -9,6 +9,8 @@ Ladder:
 * Add ladder options (time limits, description, etc)
 * Unlisted ladders
 * Invite only ladders
+* Some kind of system-messaging
+* Show history of past challenges/matches
 
 User Control:
 
