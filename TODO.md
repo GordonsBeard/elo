@@ -1,30 +1,26 @@
 **To-Do**
 
-Ladder:
+Needs:
 
-* Enforce time limits (django-cron)
+* Add ladder options (time limits, description, etc).
+* Implement boostrap
+
+Wants:
+
 * E-Mail alerting
 * Twitter alerting
-* Add moderators
-* Add ladder options (time limits, description, etc)
+* Add user levels (SysAdmin/LadderAdmin/Judge/Player)
 * Unlisted ladders
 * Invite only ladders
 * Some kind of system-messaging
 * Show history of past challenges/matches
-
-User Control:
-
 * Switch to django-social-auth for logins
-* User control panel
-
-Design:
-
-* Implement boostrap
-
+* User control panel (profile, preferences)
 ___
 
 **Done**
 
+* Enforce time limits (django-cron)
 * Forfeiting challenge (From initial accept and results reporting)
 * Canceling challenge
 * Game creation
