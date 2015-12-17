@@ -14,7 +14,9 @@
 <form action="/l/create" method="post">
     {% csrf_token %}
     {{ form }}
+    <br />
     <input type="submit" value="Submit" />
+    <br />
     <a href="/l/add_game">+ Add a game</a>
 </form>
 {% endblock content %}

@@ -224,7 +224,7 @@ def create_ladder(request):
     class CreateLadderForm(forms.ModelForm):
         class Meta:
             model = Ladder
-            fields = ['name', 'game', 'owner']
+            fields = ['name', 'game', 'owner', 'description', 'privacy', 'max_players', 'up_arrow', 'down_arrow', 'response_timeout']
             widgets = {'owner': forms.HiddenInput()}
 
     if request.method == 'POST':
@@ -234,8 +234,16 @@ def create_ladder(request):
             name = form.cleaned_data['name']
             game = form.cleaned_data['game']
             owner = form.cleaned_data['owner']
+            description = form.cleaned_data['description']
+            privacy = form.cleaned_data['privacy']
+            max_players = form.cleaned_data['max_players']
+            up_arrow = form.cleaned_data['up_arrow']
+            down_arrow = form.cleaned_data['down_arrow']
+            response_timeout = form.cleaned_data['response_timeout']
 
-            newLadder = Ladder.objects.create(name = name, game = game, owner = owner)
+            newLadder = Ladder.objects.create(name = name, game = game, owner = owner, description = description,
+                                              privacy = privacy, max_players = max_players, up_arrow = up_arrow, 
+                                              down_arrow = down_arrow, response_timeout = response_timeout)
             messages.success(request, "Ladder created: {0}".format(newLadder.name))
             return HttpResponseRedirect('/')
     else:

@@ -4,6 +4,7 @@ Needs:
 
 * Add ladder options (time limits, description, etc).
 * Implement boostrap
+* Error pages
 
 Wants:
 

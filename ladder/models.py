@@ -113,9 +113,9 @@ class Ladder(models.Model):
         """Gets number of players on ladder."""
         return Rank.objects.filter( ladder = self ).count()
 
-    def save(self, force_insert=False, force_update=False, using=None):
+    def save(self, force_insert=False, force_update=False, using=None, *args, **kwargs):
         self.slug = slugify(self.name)
-        super(Ladder, self).save()
+        super(Ladder, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
         return "/l/{0}".format(self.slug)
@@ -144,10 +144,10 @@ class Ladder(models.Model):
     max_players         = models.IntegerField(default='0')
     privacy             = models.CharField(max_length=2, choices=PRIVACY_LEVELS, blank=False, default=PRIVACY_OPEN)
     signups             = models.BooleanField(blank=False, default=True)
-    created             = models.DateTimeField('Ladder Created', blank=False, auto_now_add=True)
-    end_date            = models.DateTimeField('Ladder Closes', blank=True, null=True)
-    up_arrow            = models.IntegerField("up arrow range", default='2')
-    down_arrow          = models.IntegerField("down arrow range", default='4')
+    created             = models.DateTimeField("Ladder Created", blank=False, auto_now_add=True)
+    end_date            = models.DateTimeField("Ladder Closes", blank=True, null=True)
+    up_arrow            = models.IntegerField("Up arrow range", default='2')
+    down_arrow          = models.IntegerField("Down arrow range", default='4')
     weekly_reset        = models.CharField(max_length=2, choices=WEEKDAYS, blank=True, null=True)
     challenge_cooldown  = models.IntegerField(blank=True, null=True)
     response_timeout    = models.IntegerField(blank=True, default='3')
