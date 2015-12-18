@@ -2,12 +2,12 @@
 
 Needs:
 
-* Add ladder options (time limits, description, etc).
-* Implement boostrap
 * Error pages
+* Maxplayers enforcement(s)
 
 Wants:
 
+* Implement boostrap
 * E-Mail alerting
 * Twitter alerting
 * Add user levels (SysAdmin/LadderAdmin/Judge/Player)
@@ -18,3 +18,4 @@ Wants:
 * Switch to django-social-auth for logins
 * User control panel (profile, preferences)
 * Custom seeding, copy preferences from other Ladder
+* Kicking/Banning players from a Ladder
