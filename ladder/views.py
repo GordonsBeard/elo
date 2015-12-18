@@ -220,18 +220,19 @@ def issue_challenge(request, *args, **kwargs):
         return redirect('/u/messages/challenges/')
 
 @login_required
-def create_update_ladder(request):
+def create_update_ladder(request, ladder_slug = None):
     class CreateUpdateLadderForm(forms.ModelForm):
         class Meta:
             model = Ladder
             fields = ['name', 'game', 'owner', 'description', 'privacy', 'max_players', 'up_arrow', 'down_arrow', 'response_timeout']
             widgets = {'owner': forms.HiddenInput()}
+    
+    ladder = Ladder.objects.get(slug = ladder_slug) if ladder_slug is not None else None
 
     if request.method == 'POST':
         form = CreateUpdateLadderForm(request.POST)
-
         if form.is_valid():
-            name = form.cleaned_data['name']
+            #name = form.cleaned_data['name']
             game = form.cleaned_data['game']
             owner = form.cleaned_data['owner']
             description = form.cleaned_data['description']
@@ -241,13 +242,15 @@ def create_update_ladder(request):
             down_arrow = form.cleaned_data['down_arrow']
             response_timeout = form.cleaned_data['response_timeout']
 
-            newLadder = Ladder.objects.create(name = name, game = game, owner = owner, description = description,
-                                              privacy = privacy, max_players = max_players, up_arrow = up_arrow, 
-                                              down_arrow = down_arrow, response_timeout = response_timeout)
-            messages.success(request, "Ladder created: {0}".format(newLadder.name))
+            newLadder, created = Ladder.objects.update_or_create(name = form.cleaned_data['name'], defaults = {'game' : game, 'owner' : owner, 'description' : description,
+                                              'privacy' : privacy, 'max_players' : max_players, 'up_arrow' : up_arrow, 
+                                              'down_arrow' : down_arrow, 'response_timeout' : response_timeout})
+
+            message = "created" if created else "updated"
+            messages.success(request, "Ladder {0}: {1}".format(message, newLadder.name))
             return HttpResponseRedirect('/')
     else:
-        form = CreateUpdateLadderForm(initial={'owner': request.user.pk})
+        form = CreateUpdateLadderForm(initial={'owner': request.user.pk}, instance = ladder)
     return render_to_response("create_update_ladder.html", {'form': form}, context_instance=RequestContext(request))
 
 @login_required
