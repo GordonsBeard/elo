@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 
 {% load staticfiles %}
-{# load ladder_extras #}
 
 {% block head %}{% endblock head %}
 
@@ -10,6 +9,7 @@
 
 <h1>{{ ladder.name }}</h1>
 <h4><em>{{ ladder.game.name }}</em></h4>
+{% if ladder.max_players > 0 %}<p>Max players: {{ ladder.max_players }}</p>{% endif %}
 <p>{{ ladder.description }}</p>
 {% if user.is_authenticated %}
     {% if user == ladder.owner %}
@@ -22,10 +22,10 @@
 {% if user.is_authenticated %}
 {% if ladder.signups %}
     {% if join_link %}<a href="{{ ladder.get_absolute_url }}join/">Join this Ladder!</a>{% endif %}
-    {% if not join_link %}<a href="{{ ladder.get_absolute_url }}leave/">Leave this Ladder!</a>{% endif %}
 {% else %}
     <em>Signups for this ladder are currently closed.</em>
 {% endif %}
+{% if leave_link %}<a href="{{ ladder.get_absolute_url }}leave/">Leave this Ladder!</a>{% endif %}
 {% endif %}
 <ul class="message">
     {% for message in messages %}

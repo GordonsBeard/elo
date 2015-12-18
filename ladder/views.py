@@ -22,10 +22,18 @@ def single_ladder_details(request, ladder):
 
     # if user is logged in
     if request.user.is_authenticated():
+
         # set a flag to allow them to join the ladder
-        join_link = True if request.user.pk not in [key.player.pk for key in rank_list] else None
+        join_link = None
+        leave_link = None
+
+        if ladder.max_players > ladder.players or ladder.max_players == 0 and request.user.pk not in [key.player.pk for key in rank_list]: 
+            join_link = True
+
+        if request.user.pk in [key.player.pk for key in rank_list]:
+            leave_link = True
+
         # if there is a ranking, get a list of those you can challenge.
-        
         try:
             current_player_rank = Rank.objects.get(player = request.user, ladder = ladder)
             challengables = _get_valid_targets(request.user, current_player_rank, rank_list, ladder)
@@ -44,7 +52,7 @@ def single_ladder_details(request, ladder):
     rank_list       = [(r, _open_challenges_exist( r.player, ladder )) for r in rank_list] 
     match_list      = Match.objects.filter(ladder = ladder).order_by('-date_complete')[:25]
     open_challenges = Challenge.objects.filter(challenger = request.user.id, ladder = ladder).filter(accepted = 0).order_by('-deadline')
-    return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
+    return {'can_challenge':open_challenges_exist, 'challengables': challengables, 'current_player_rank':current_player_rank, 'leave_link':leave_link, 'join_link':join_link, 'ladder':ladder, 'rank_list':rank_list, 'match_list':match_list, 'open_challenges':open_challenges}
 
 def list_all_ladders(request):
     """Retrieve info on all the ladders."""
