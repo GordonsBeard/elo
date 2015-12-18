@@ -17,7 +17,7 @@
 {% for ladder in ladder_list %}
 <li><a href="{{ ladder.get_absolute_url }}">{{ ladder }}</a> ({{ ladder.game.abv }})</li>
 {% endfor %}
-<li><a href="/l/create">+ Create a ladder</a></li>
+<li><a href="/create">+ Create a ladder</a></li>
 </ul>
 
 {% if your_challenges %}
