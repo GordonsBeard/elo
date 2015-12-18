@@ -118,7 +118,7 @@ class Ladder(models.Model):
         super(Ladder, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return "/l/{0}".format(self.slug)
+        return "/l/{0}/".format(self.slug)
 
     def latest_match(self):
         matches = Match.objects.filter(ladder_id=self.id).order_by('-date_challenged').first()

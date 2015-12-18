@@ -14,8 +14,8 @@
 <br>
 {% if user.is_authenticated %}
 {% if ladder.signups %}
-    {% if join_link %}<a href="{{ ladder.get_absolute_url }}/join">Join this Ladder!</a>{% endif %}
-    {% if not join_link %}<a href="{{ ladder.get_absolute_url }}/leave">Leave this Ladder!</a>{% endif %}
+    {% if join_link %}<a href="{{ ladder.get_absolute_url }}join/">Join this Ladder!</a>{% endif %}
+    {% if not join_link %}<a href="{{ ladder.get_absolute_url }}leave/">Leave this Ladder!</a>{% endif %}
 {% else %}
     <em>Signups for this ladder are currently closed.</em>
 {% endif %}
@@ -41,7 +41,7 @@
             <td><span class="rank{{ player_rank.rank|ordinal }}"><img src="{{ player_rank.player.userprofile.avatar }}" /> <a href="{% url 'user:profile' player_rank.player.username %}">{{ player_rank.player.userprofile.handle }}</a></span></td>
             <td>
                 {% if player_rank.rank in challengables %}
-                <form action="{% url 'ladder:issue_challenge' %}" method="POST">
+                <form action="{% url 'ladder:issue_challenge' ladder.slug %}" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="challenger" value="{{ user.pk }}" />
                 <input type="hidden" name="challengee" value="{{ player_rank.player.pk }}" />
