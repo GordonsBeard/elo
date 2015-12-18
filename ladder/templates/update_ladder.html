@@ -10,13 +10,13 @@
     <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
 </ul>
-
+<h1>{{ ladder.name }}</h1>
+<h4><em>{{ ladder.game.name }}</em></h4>
+<br />
 <form action="{% url 'ladder:update_ladder' ladder.slug  %}" method="post">
     {% csrf_token %}
     {{ form }}
     <br />
-    <input type="submit" value="Submit" />
-    <br />
-    <a href="/add_game/">+ Add a game</a>
+    <input type="submit" value="Submit" /> <a href="{% url 'ladder:detail' ladder.slug %}">cancel edits</a>
 </form>
 {% endblock content %}
