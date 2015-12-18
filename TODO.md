@@ -3,7 +3,6 @@
 Needs:
 
 * Error pages
-* Maxplayers enforcement(s)
 * Challenge disputing resolution
 	* Match status needs "DISPUTED"
 	* Alert the Ladder Owner
