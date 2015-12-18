@@ -232,7 +232,7 @@ def create_update_ladder(request, ladder_slug = None):
     if request.method == 'POST':
         form = CreateUpdateLadderForm(request.POST)
         if form.is_valid():
-            #name = form.cleaned_data['name']
+            name = form.cleaned_data['name']
             game = form.cleaned_data['game']
             owner = form.cleaned_data['owner']
             description = form.cleaned_data['description']
@@ -242,7 +242,7 @@ def create_update_ladder(request, ladder_slug = None):
             down_arrow = form.cleaned_data['down_arrow']
             response_timeout = form.cleaned_data['response_timeout']
 
-            newLadder, created = Ladder.objects.update_or_create(name = form.cleaned_data['name'], defaults = {'game' : game, 'owner' : owner, 'description' : description,
+            newLadder, created = Ladder.objects.update_or_create(name = name, defaults = {'game' : game, 'owner' : owner, 'description' : description,
                                               'privacy' : privacy, 'max_players' : max_players, 'up_arrow' : up_arrow, 
                                               'down_arrow' : down_arrow, 'response_timeout' : response_timeout})
 
