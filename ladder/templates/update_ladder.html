@@ -1,0 +1,22 @@
+﻿{% extends "layout.html" %}
+
+{% load staticfiles %}
+{% block head %}{% endblock head %}
+
+
+{% block content %}
+<ul class="message">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+<form action="{% url 'ladder:update_ladder' ladder.slug  %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <br />
+    <input type="submit" value="Submit" />
+    <br />
+    <a href="/add_game/">+ Add a game</a>
+</form>
+{% endblock content %}
