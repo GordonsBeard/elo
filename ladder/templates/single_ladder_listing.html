@@ -11,6 +11,13 @@
 <h1>{{ ladder.name }}</h1>
 <h4><em>{{ ladder.game.name }}</em></h4>
 <p>{{ ladder.description }}</p>
+{% if user.is_authenticated %}
+    {% if user == ladder.owner %}
+    <ul>
+        <li><a href="{% url 'ladder:update_ladder' ladder.slug %}">Edit/Update Ladder</a></li>
+    </ul>
+    {% endif %}
+{% endif %}
 <br>
 {% if user.is_authenticated %}
 {% if ladder.signups %}
