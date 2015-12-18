@@ -2,6 +2,7 @@
 import datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
@@ -141,16 +142,16 @@ class Ladder(models.Model):
     game                = models.ForeignKey(Game)
     players             = property(ranked_players)
     latest_activity     = property(latest_match)
-    max_players         = models.IntegerField(default='0')
+    max_players         = models.IntegerField(default='0', validators=[MinValueValidator(0),])
     privacy             = models.CharField(max_length=2, choices=PRIVACY_LEVELS, blank=False, default=PRIVACY_OPEN)
     signups             = models.BooleanField(blank=False, default=True)
     created             = models.DateTimeField("Ladder Created", blank=False, auto_now_add=True)
     end_date            = models.DateTimeField("Ladder Closes", blank=True, null=True)
-    up_arrow            = models.IntegerField("Up arrow range", default='2')
-    down_arrow          = models.IntegerField("Down arrow range", default='4')
+    up_arrow            = models.IntegerField("Up arrow range", default='2', validators=[MinValueValidator(0),])
+    down_arrow          = models.IntegerField("Down arrow range", default='4', validators=[MinValueValidator(0),])
     weekly_reset        = models.CharField(max_length=2, choices=WEEKDAYS, blank=True, null=True)
-    challenge_cooldown  = models.IntegerField(blank=True, null=True)
-    response_timeout    = models.IntegerField(blank=True, default='3')
+    challenge_cooldown  = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0),])
+    response_timeout    = models.IntegerField(blank=True, default='3', validators=[MinValueValidator(0),])
 
 
 class Rank(models.Model):
