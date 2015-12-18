@@ -267,7 +267,7 @@ def add_game(request):
 
             newGame = Game.objects.create(name = name, abv = abv, icon = icon)
             messages.success(request, "Game added: {0}".format(newGame.name))
-            return HttpResponseRedirect('/l/create')
+            return HttpResponseRedirect('/create/')
     else:
         form = AddGameForm()
     return render_to_response("add_game.html", {'form': form}, context_instance=RequestContext(request))

@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^openid/',                include('django_openid_auth.urls')),
     url(r'^logout/$',               elo.views.logout_view),
     url(r'^create/$',               ladder.views.create_ladder),
+    url(r'^add_game/$',             ladder.views.add_game),
 ]
