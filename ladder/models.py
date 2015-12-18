@@ -73,8 +73,8 @@ def _get_user_challenges(user, ladder = None, statuses = None):
     return open_challenges
 
 class Game(models.Model):
-    name    = models.CharField(max_length=50)
-    abv     = models.CharField(max_length=10)
+    name    = models.CharField(max_length=50, unique=True)
+    abv     = models.CharField(max_length=10, unique=True)
     slug    = models.CharField(max_length=50, blank=True, editable=False)
     icon    = models.ImageField(upload_to='img/games', blank=True)
 
@@ -83,7 +83,7 @@ class Game(models.Model):
         super(Game, self).save()
 
     def get_absolute_url(self):
-        return "/g/{0}".format(self.slug)
+        return "/g/{0}/".format(self.slug)
 
     def __unicode__(self):
         return self.name
