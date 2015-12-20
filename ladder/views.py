@@ -129,7 +129,7 @@ def join_ladder(request, ladder_slug):
     # Before going further, ensure the ladder is currently accepting signups.
     if ladder.signups == 0:
         messages.error(request, u"This ladder is currently not accepting signups. Please contact the owner for more information.")
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
     # If GET and user is not ranked: allow the confirmation.
     if request.method == 'GET' and not _user_already_ranked(request.user, ladder):
@@ -139,12 +139,12 @@ def join_ladder(request, ladder_slug):
     # If GET but user is ranked: abort.
     elif request.method == 'GET' and _user_already_ranked(request.user, ladder):
         messages.error(request, u"Cannot join: you are already ranked on this ladder.")
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
     # If POST but user is ranked: abort.
     elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
         messages.error(request, u"Cannot join: you are already ranked on this ladder.")
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
     
     # If POST and user is unranked: confirm the join.
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
@@ -155,7 +155,7 @@ def join_ladder(request, ladder_slug):
         rank_list = Rank.objects.filter(ladder = ladder)
         messages.success(request, u"You've joined the ladder! You are now rank {0} of {1}.".format(new_rank.rank, rank_list.count()))
     
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
 @login_required
 def leave_ladder(request, ladder_slug):
@@ -171,7 +171,7 @@ def leave_ladder(request, ladder_slug):
     # If POST and user is unranked: abort
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
         messages.error(request, u"You are not ranked on this ladder.")
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
     # If POST and user is ranked: confirm the delet
     elif request.method == 'POST' and _user_already_ranked(request.user, ladder):
@@ -179,7 +179,7 @@ def leave_ladder(request, ladder_slug):
         player_rank.delete()
 
         messages.success(request, u"You have been removed from the ladder: {0}".format(ladder.name))
-        return HttpResponseRedirect('/l/{0}/'.format(ladder.slug))
+        return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
 @login_required
 def issue_challenge(request, *args, **kwargs):
@@ -191,14 +191,14 @@ def issue_challenge(request, *args, **kwargs):
             ladder_slug     = request.POST['ladder']
         except KeyError :
             messages.error( request, "POST data is incomplete, nice try hacker scum" )
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect(reverse('ladder:detail'))
 
         try :
             challenger      = request.user
             challengee      = User.objects.get(pk = challengee_id)
         except ObjectDoesNotExist :
             messages.error( request, "Challenge target does not exist {}".format( challengee_id ) )
-            return HttpResponseRedirect('/l/{0}/'.format( ladder_slug ))
+            return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
         try :
             ladder          = Ladder.objects.get(slug=ladder_slug)
@@ -206,7 +206,7 @@ def issue_challenge(request, *args, **kwargs):
                 raise PlayerNotRanked( "challenger isn't ranked on the ladder", ladder )
         except ObjectDoesNotExist, PlayerNotRanked :
             messages.error( request, "You cannot issue a challenge on the ladder {}".format( ladder_slug ) )
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect(reverse('ladder:detail'))
 
         # Check for open challenges
 
@@ -220,7 +220,7 @@ def issue_challenge(request, *args, **kwargs):
                 messages.success(request, u"You have issued a challenged to {0}, under the ladder {1}".format(challengee.userprofile.handle, ladder.name))
             except ChallengeValidationError as e :
                 messages.error( request, "An error occurred: {}".format( str(e) ) )
-                return HttpResponseRedirect('/l/{0}/'.format( ladder_slug ))
+                return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
         return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
 
@@ -316,7 +316,7 @@ def add_game(request):
 
             newGame = Game.objects.create(name = name, abv = abv, icon = icon)
             messages.success(request, "Game added: {0}".format(newGame.name))
-            return HttpResponseRedirect(reverse('ladder.views.create_ladder'))
+            return HttpResponseRedirect(reverse('ladder:create_ladder'))
     else:
         form = AddGameForm()
     return render_to_response("add_game.html", {'form': form}, context_instance=RequestContext(request))
