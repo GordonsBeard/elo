@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login as auth_login
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -112,4 +113,5 @@ def login(request):
 
 def logout_view(request):
     logout(request)
-    return HttpResponse('Logged out.')
+    messages.success(request, "You have been signed out!")
+    return HttpResponseRedirect(reverse('index'))

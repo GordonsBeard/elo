@@ -19,13 +19,15 @@ def single_ladder_details(request, ladder):
     
     # get the raw ranking list
     rank_list = Rank.objects.filter(ladder = ladder).order_by('rank')  
+    
+    # set a flag to allow them to join the ladder
+    join_link = None
+    leave_link = None
 
     # if user is logged in
     if request.user.is_authenticated():
 
-        # set a flag to allow them to join the ladder
-        join_link = None
-        leave_link = None
+
 
         if ladder.max_players > ladder.players or ladder.max_players == 0 and request.user.pk not in [key.player.pk for key in rank_list]: 
             join_link = True
@@ -191,7 +193,7 @@ def issue_challenge(request, *args, **kwargs):
             ladder_slug     = request.POST['ladder']
         except KeyError :
             messages.error( request, "POST data is incomplete, nice try hacker scum" )
-            return HttpResponseRedirect(reverse('ladder:detail'))
+            return HttpResponseRedirect(reverse('index'))
 
         try :
             challenger      = request.user
@@ -206,7 +208,7 @@ def issue_challenge(request, *args, **kwargs):
                 raise PlayerNotRanked( "challenger isn't ranked on the ladder", ladder )
         except ObjectDoesNotExist, PlayerNotRanked :
             messages.error( request, "You cannot issue a challenge on the ladder {}".format( ladder_slug ) )
-            return HttpResponseRedirect(reverse('ladder:detail'))
+            return HttpResponseRedirect(reverse('index'))
 
         # Check for open challenges
 

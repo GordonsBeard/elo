@@ -8,7 +8,7 @@ import elo.views
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$',                      ladder.views.index),
+    url(r'^$',                      ladder.views.index, name='index'),
     url(r'^l/',                     include('ladder.urls', namespace = "ladder")),
     url(r'^u/',                     include('usercontrol.urls', namespace = "user")),
     url(r'^admin/',                 include(admin.site.urls)),
