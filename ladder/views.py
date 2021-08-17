@@ -1,17 +1,16 @@
 ﻿from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse
 from django.db.models import Q
-from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import redirect, render, render_to_response, get_object_or_404
-from django.template import RequestContext
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect, render, get_object_or_404
 from django import forms
 from itertools import chain
 
 from ladder.models import Rank, Match, Ladder, Challenge, Game
-from ladder.helpers import _open_challenges_exist, _get_valid_targets, paged
+from ladder.helpers import _open_challenges_exist, _get_valid_targets
 from ladder.exceptions import ChallengeValidationError, PlayerNotRanked
 
 def single_ladder_details(request, ladder):
@@ -25,9 +24,7 @@ def single_ladder_details(request, ladder):
     leave_link = None
 
     # if user is logged in
-    if request.user.is_authenticated():
-
-
+    if request.user.is_authenticated:
 
         if ladder.max_players > ladder.players or ladder.max_players == 0 and request.user.pk not in [key.player.pk for key in rank_list]: 
             join_link = True
@@ -64,15 +61,15 @@ def list_all_ladders(request):
     rank_list = Rank.objects.all()
     ladder_list = Ladder.objects.all()
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         # Check for open challenges
         try:
             challenger_list = Challenge.objects.filter(match__challenger = request.user, accepted=False)
-        except Exception, e:
+        except Exception:
             challenger_list = []
         try:
             challengee_list = Challenge.objects.filter(match__challengee = request.user, accepted=False)
-        except Exception, e:
+        except Exception:
             challengee_list = []
 
         # Check for logged-in users' open challenges
@@ -90,14 +87,13 @@ def index(request, ladder_slug = None):
         ladder = Ladder.objects.get(slug = get_slug)
         single_ladder_info = single_ladder_details(request, ladder)
 
-        return render_to_response('single_ladder_listing.html', single_ladder_info, context_instance=RequestContext(request))
+        return render(request, 'single_ladder_listing.html', single_ladder_info)
     
     # Get a list of all ladders
     else:
         all_ladders = list_all_ladders(request)
-        return render_to_response('ladder_home.html', all_ladders, context_instance=RequestContext(request))
+        return render(request, 'ladder_home.html', all_ladders)
 
-@paged
 def match_list( request, ladder_slug, page_info ) :
     # TODO: Implement this
     # Show a (paged) list of all matches on the ladder
@@ -105,7 +101,7 @@ def match_list( request, ladder_slug, page_info ) :
     matches         = Match.objects.filter( ladder = ladder ).order_by( '-date_complete' )[page_info.get_item_slice()]
     page_info.set_item_count( Match.objects.filter( ladder = ladder ).count() )
 
-    return render_to_response('match_list.html', { 'ladder':ladder, 'pageinfo':page_info, 'matches':matches }, context_instance=RequestContext(request))
+    return render(request, 'match_list.html', { 'ladder':ladder, 'pageinfo':page_info, 'matches':matches })
 
 def match_detail( request, ladder_slug, match_id ) :
     # TODO: Implement this
@@ -113,7 +109,7 @@ def match_detail( request, ladder_slug, match_id ) :
     ladder          = get_object_or_404( Ladder, slug = ladder_slug )
     match           = get_object_or_404( Match, id = match_id, ladder = ladder )
 
-    return render_to_response('match_details.html', { 'match':match }, context_instance=RequestContext(request))
+    return render(request, 'match_details.html', { 'match':match })
 
 def _user_already_ranked(user, ladder):
     """Returns true if user exists on ladder."""
@@ -136,7 +132,7 @@ def join_ladder(request, ladder_slug):
     # If GET and user is not ranked: allow the confirmation.
     if request.method == 'GET' and not _user_already_ranked(request.user, ladder):
         ladder = Ladder.objects.get(slug = ladder_slug)
-        return render_to_response('confirm_join.html', {"ladder":ladder}, context_instance=RequestContext(request))
+        return render(request, 'confirm_join.html', {"ladder":ladder})
 
     # If GET but user is ranked: abort.
     elif request.method == 'GET' and _user_already_ranked(request.user, ladder):
@@ -168,7 +164,7 @@ def leave_ladder(request, ladder_slug):
     if request.method == 'GET':
         challenges  = Challenge.objects.filter  ( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(accepted = Challenge.STATUS_NOT_ACCEPTED) ).count()
         matches     = Match.objects.filter( (Q(challengee = request.user) | Q(challenger = request.user)) & Q(ladder = ladder) & Q(date_complete__isnull = True) ).count()
-        return render_to_response('confirm_leave.html', {"ladder":ladder,"challenges":challenges, "matches":matches}, context_instance=RequestContext(request))
+        return render(request, 'confirm_leave.html', {"ladder":ladder,"challenges":challenges, "matches":matches})
 
     # If POST and user is unranked: abort
     elif request.method == 'POST' and not _user_already_ranked(request.user, ladder):
@@ -200,13 +196,13 @@ def issue_challenge(request, *args, **kwargs):
             challengee      = User.objects.get(pk = challengee_id)
         except ObjectDoesNotExist :
             messages.error( request, "Challenge target does not exist {}".format( challengee_id ) )
-            return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
+            return HttpResponseRedirect(reverse('ladder:detail', args=(ladder_slug,)))
 
         try :
             ladder          = Ladder.objects.get(slug=ladder_slug)
             if not ladder.is_user_ranked( challenger ) :
                 raise PlayerNotRanked( "challenger isn't ranked on the ladder", ladder )
-        except ObjectDoesNotExist, PlayerNotRanked :
+        except PlayerNotRanked:
             messages.error( request, "You cannot issue a challenge on the ladder {}".format( ladder_slug ) )
             return HttpResponseRedirect(reverse('index'))
 
@@ -224,7 +220,7 @@ def issue_challenge(request, *args, **kwargs):
                 messages.error( request, "An error occurred: {}".format( str(e) ) )
                 return HttpResponseRedirect(reverse('ladder:detail', args=(ladder.slug,)))
 
-        return render_to_response('challenge.html', {'ladder':ladder, 'challengee':challengee }, context_instance=RequestContext(request))
+        return render(request, 'challenge.html', {'ladder':ladder, 'challengee':challengee })
 
     # Otherwise show a list of people you can challenge
     else:
@@ -259,7 +255,7 @@ def create_ladder(request):
             return HttpResponseRedirect(reverse('ladder:detail', kwargs={'ladder_slug' : newLadder.slug}))
     else:
         form = CreateLadderForm(initial={'owner': request.user.pk})
-    return render_to_response("create_ladder.html", {'form': form}, context_instance=RequestContext(request))
+    return render(request, "create_ladder.html", {'form': form})
 
 @login_required
 def update_ladder(request, ladder_slug):
@@ -284,7 +280,7 @@ def update_ladder(request, ladder_slug):
             # Don't let max players be set to less than current max players.
             if form.cleaned_data['max_players'] < ladder.players and form.cleaned_data['max_players'] != 0:
                 form.add_error('max_players', "Cannot have max players less than current playercount of {}".format(ladder.players))
-                return render_to_response("update_ladder.html", {'form': form, 'ladder': ladder}, context_instance=RequestContext(request))
+                return render(request, "update_ladder.html", {'form': form, 'ladder': ladder})
 
             ladder.max_players = form.cleaned_data['max_players']
             ladder.up_arrow = form.cleaned_data['up_arrow']
@@ -296,10 +292,10 @@ def update_ladder(request, ladder_slug):
             return HttpResponseRedirect(reverse('ladder:detail', kwargs = {'ladder_slug' : ladder.slug}))
         else:
             # Form is not valid, failed some validation (negative max_players, etc)
-            return render_to_response("update_ladder.html", {'form': form, 'ladder': ladder}, context_instance=RequestContext(request))
+            return render(request, "update_ladder.html", {'form': form, 'ladder': ladder})
     else:
         form = UpdateLadderForm(instance = ladder)
-        return render_to_response("update_ladder.html", {'form': form, 'ladder': ladder}, context_instance=RequestContext(request))
+        return render(request, "update_ladder.html", {'form': form, 'ladder': ladder})
 
 @login_required
 def add_game(request):
@@ -318,7 +314,7 @@ def add_game(request):
 
             newGame = Game.objects.create(name = name, abv = abv, icon = icon)
             messages.success(request, "Game added: {0}".format(newGame.name))
-            return HttpResponseRedirect(reverse('ladder:create_ladder'))
+            return HttpResponseRedirect(reverse('ladder:create'))
     else:
         form = AddGameForm()
-    return render_to_response("add_game.html", {'form': form}, context_instance=RequestContext(request))
+    return render(request, "add_game.html", {'form': form})

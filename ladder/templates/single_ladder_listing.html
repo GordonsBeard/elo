@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% load staticfiles %}
+{% load static %}
 
 {% block head %}{% endblock head %}
 
@@ -21,11 +21,11 @@
 <br>
 {% if user.is_authenticated %}
 {% if ladder.signups %}
-    {% if join_link %}<a href="{{ ladder.get_absolute_url }}join/">Join this Ladder!</a>{% endif %}
+    {% if join_link %}<a href="{% url 'ladder:join' ladder.slug %}">Join this Ladder!</a>{% endif %}
 {% else %}
     <em>Signups for this ladder are currently closed.</em>
 {% endif %}
-{% if leave_link %}<a href="{{ ladder.get_absolute_url }}leave/">Leave this Ladder!</a>{% endif %}
+{% if leave_link %}<a href="{% url 'ladder:leave' ladder.slug %}">Leave this Ladder!</a>{% endif %}
 {% endif %}
 <ul class="message">
     {% for message in messages %}
@@ -95,5 +95,5 @@
 {% endif %}
 {% endfor %}
 </table><br />
-<a href="{% url 'ladder:match_list' ladder.slug %}">See all</a>
+
 {% endblock content %}

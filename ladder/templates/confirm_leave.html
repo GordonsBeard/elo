@@ -1,6 +1,6 @@
 ﻿{% extends 'layout.html' %}
 
-{% load staticfiles %}
+{% load static %}
 
 {% block head %}{% endblock head %}
 
@@ -23,7 +23,7 @@
 <br />
 <p><strong>Leaving this ladder CANNOT BE <u>UNDONE</u> and everyone ranked below you will be moved up a rank.</strong></p>
 <br />
-<form action="/l/{{ ladder.slug }}/leave/" method="post">
+<form action="{% url 'ladder:leave' ladder.slug %}" method="post">
     {% csrf_token %}
     <input type="submit" value="Leave" />
 </form>

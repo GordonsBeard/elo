@@ -8,7 +8,7 @@ class SteamProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = "profiles"
-    readonly_fields = ("handle", "steamid", "url", "avatar", "avatarM", "avatarL", "primarygroup", "realname", )
+    fields = ("handle", "steamid", "url", "avatar", "avatarM", "avatarL", "primarygroup", "realname", )
 
 class UserAdmin(BaseUserAdmin):
     inlines = (SteamProfileInline, )

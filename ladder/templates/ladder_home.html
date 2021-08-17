@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% load staticfiles %}
+{% load static %}
 {% load humanize %}
 
 {% block head %}{% endblock head %}
@@ -15,9 +15,9 @@
 <h2>Ladders:</h2>
 <ul>
 {% for ladder in ladder_list %}
-<li><a href="{{ ladder.get_absolute_url }}">{{ ladder }}</a> ({{ ladder.game.abv }})</li>
+<li><a href="{% url 'ladder:detail' ladder.slug %}">{{ ladder }}</a> ({{ ladder.game.abv }})</li>
 {% endfor %}
-<li><a href="/create/">+ Create a ladder</a></li>
+<li><a href="{% url 'ladder:create' %}">+ Create a ladder</a></li>
 </ul>
 
 {% if your_challenges %}

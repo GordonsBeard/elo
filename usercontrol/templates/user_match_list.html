@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% load staticfiles %}
+{% load static %}
 {% load humanize %}
 {% load paging_tags %}
 
@@ -15,7 +15,6 @@
 
 <h1>{{ userp.userprofile.handle }} - Match History</h1>
 
-<p class="page_list">{% page_list pageinfo %}</p><br />
 <div id="match_list">
     {% if matches %}
     <table>
@@ -48,7 +47,6 @@
     <p>Matches will appear when players challenge each other.</p>
     {% endif %}
 </div>
-<p class="page_list">{% page_list pageinfo %}</p><br />
 
 <div id="back_block">
     <a href="{% url 'user:profile' userp.username %}">&lt;&lt; Back to {{ userp.userprofile.handle }}</a>

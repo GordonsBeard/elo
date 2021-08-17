@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models.signals import post_save
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, blank=False, null=False, on_delete=models.CASCADE)
 
     # This will update their steam information every time they log in or something I guess yeah that sounds good.
     handle = models.CharField(max_length=50, blank=True)
@@ -15,7 +15,7 @@ class UserProfile(models.Model):
     primarygroup = models.CharField(max_length=50, blank=True)
     realname = models.CharField(max_length=50, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.handle
 
 def create_user_profile(sender, instance, created, **kw):

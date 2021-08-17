@@ -5,8 +5,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
+from django.db.models.deletion import CASCADE, SET_NULL
 from django.db.models.signals import post_save, post_delete
 from django.template.defaultfilters import slugify
+from django.urls.base import reverse
 from django.utils.timezone import utc
 from ladder.exceptions import ParticipantBusy, PlayerNotRanked, ChallengeeOutOfRange, ChallengeeIsChallenger
 
@@ -83,10 +85,7 @@ class Game(models.Model):
         self.slug = slugify(self.name)
         super(Game, self).save()
 
-    def get_absolute_url(self):
-        return "/g/{0}/".format(self.slug)
-
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class Ladder(models.Model):
@@ -118,9 +117,6 @@ class Ladder(models.Model):
         self.slug = slugify(self.name)
         super(Ladder, self).save(*args, **kwargs)
 
-    def get_absolute_url(self):
-        return "/l/{0}/".format(self.slug)
-
     def latest_match(self):
         matches = Match.objects.filter(ladder_id=self.id).order_by('-date_challenged').first()
         if not matches :
@@ -129,8 +125,8 @@ class Ladder(models.Model):
 
     def is_user_ranked( self, user ) :
         return user.rank_set.get( ladder = self ) != None
-
-    def __unicode__(self):
+    
+    def __str__(self):
         return "{0} ({1})".format(self.name, self.game.name)
 
     name                = models.CharField(max_length=50, blank=False, unique=True)
@@ -138,8 +134,8 @@ class Ladder(models.Model):
 
     description         = models.TextField(blank=True)
 
-    owner               = models.ForeignKey('auth.User', blank=False)
-    game                = models.ForeignKey(Game)
+    owner               = models.ForeignKey('auth.User', null=True, blank=True, on_delete=SET_NULL)
+    game                = models.ForeignKey(Game, null=True, blank=True, on_delete=SET_NULL)
     players             = property(ranked_players)
     latest_activity     = property(latest_match)
     max_players         = models.IntegerField(default='0', validators=[MinValueValidator(0),])
@@ -167,13 +163,14 @@ class Rank(models.Model):
         verbose_name_plural = "Rankings"
         verbose_name        = "Rank"
 
-    player  = models.ForeignKey('auth.User')
+    player  = models.ForeignKey('auth.User', null=False, blank=False, on_delete=CASCADE)
     rank    = models.IntegerField()
     arrow   = models.CharField(max_length=2, choices=ARROW_ICONS, default='0')
-    ladder  = models.ForeignKey(Ladder)
+    ladder  = models.ForeignKey(Ladder, null=True, blank=False, on_delete=SET_NULL)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"{0} [{1}{2}]".format(self.player.userprofile.handle, self.rank, self.get_arrow_display())
+
 
 class Challenge(models.Model):
     STATUS_NOT_ACCEPTED = u'0'
@@ -192,15 +189,15 @@ class Challenge(models.Model):
         (STATUS_CANCELLED,     u'Cancelled')
     )
 
-    challenger  = models.ForeignKey('auth.User', related_name='challenge_challenger')
-    challengee  = models.ForeignKey('auth.User', related_name='challenge_challengee')
+    challenger  = models.ForeignKey('auth.User', related_name='challenge_challenger', null=True, blank=False, on_delete=SET_NULL)
+    challengee  = models.ForeignKey('auth.User', related_name='challenge_challengee', null=True, blank=False, on_delete=SET_NULL)
     date_issued = models.DateTimeField()
     deadline    = models.DateTimeField('Challenge Expires', null=True, blank=True)
     accepted    = models.CharField(max_length=2, choices=CHALLENGE_RESPONSES, blank=False, default=0)
-    ladder      = models.ForeignKey(Ladder, blank=True)
+    ladder      = models.ForeignKey(Ladder, blank=True, null=True, on_delete=SET_NULL)
     note        = models.TextField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
     def accept(self):
@@ -347,21 +344,21 @@ class Match(models.Model):
     date_challenged         = models.DateTimeField('Date Challenged')
     date_complete           = models.DateTimeField('Challenge Completed', blank=True, null=True)
 
-    ladder                  = models.ForeignKey(Ladder)
+    ladder                  = models.ForeignKey(Ladder, blank=False, null=True, on_delete=SET_NULL)
 
-    challenger              = models.ForeignKey('auth.User',     related_name='match_challenger')
+    challenger              = models.ForeignKey('auth.User',     related_name='match_challenger', blank=False, null=True, on_delete=SET_NULL)
     challenger_rank         = models.IntegerField(blank=True, null=True)
     challenger_rank_icon    = models.CharField(max_length=2, choices=ARROW_ICONS, null=True, blank=True)
 
     character1              = models.CharField('Challenger\'s Character', max_length=40, blank=True)
 
-    challengee              = models.ForeignKey('auth.User',     related_name='match_challengee')
+    challengee              = models.ForeignKey('auth.User',     related_name='match_challengee', blank=False, null=True, on_delete=SET_NULL)
     challengee_rank         = models.IntegerField(blank=True, null=True)
     challengee_rank_icon    = models.CharField(max_length=2, choices=ARROW_ICONS, null=True, blank=True)
 
     character2              = models.CharField('Challengee\'s Character', max_length=40, blank=True)
 
-    winner                  = models.ForeignKey('auth.User', blank=True, null=True)
+    winner                  = models.ForeignKey('auth.User', blank=False, null=True, on_delete=SET_NULL)
     winner_rank             = models.IntegerField(blank=True, null=True)
     winner_rank_icon        = models.CharField(max_length=2, choices=ARROW_ICONS, null=True, blank=True)
 
@@ -369,9 +366,9 @@ class Match(models.Model):
     loser_id                = property( get_loser_id )
 
     forfeit                 = models.BooleanField(blank=False, default=False)
-    related_challenge       = models.OneToOneField(Challenge)
-
-    def __unicode__(self):
+    related_challenge       = models.OneToOneField(Challenge, blank=True, null=True, on_delete=SET_NULL)
+   
+    def __str__(self):
         return "{0} vs {1}".format(self.challenger, self.challengee)
 
 def del_user_rank_adjustment(instance, sender, **kwargs):
@@ -386,7 +383,7 @@ def del_user_rank_adjustment(instance, sender, **kwargs):
             return
 
         lowerRankedPlayers = remainingPlayers.filter(rank__gt = instance.rank)
-        if lowerRankedPlayers > 0:
+        if lowerRankedPlayers.count() > 0:
             for player in lowerRankedPlayers:
                 player.rank -= 1
                 player.save()

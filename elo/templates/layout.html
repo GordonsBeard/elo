@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -13,8 +13,8 @@
 
     <body>
         <div id="topper">
-            <span class="title"><a href="/">ELO</a> - Electronic Ladder Organizer</span>
-            {% if user.is_authenticated %}<p>Logged in as: <a href="/u/profile/{{ user.username }}">{{ user.userprofile.handle }}</a> (<a href="{% url 'user:message_list' %}">messages</a> | <a href="/logout">logout</a>){% else %}<a href="/openid/login">Log In</a>{% endif %}
+            <span class="title"><a href="{% url 'index' %}">ELO</a> - Electronic Ladder Organizer</span>
+            {% if user.is_authenticated %}<p>Logged in as: <a href="{% url 'user:profile' user.userprofile.handle %}">{{ user.userprofile.handle }}</a> (<a href="{% url 'user:message_list' %}">messages</a> | <a href="{% url 'logout' %}">logout</a>){% else %}<a href="">Log In</a>{% endif %}
         </div>
 
 
@@ -24,7 +24,7 @@
 
 
         <div id="footer">
-            <a href="http://steampowered.com" title="Powered by Steam">Powered by Steam</a> + <a href="https://github.com/GordonsBeard/elo" title="Github Code">Github Repo</a>{% if user.is_staff %} + <a href="/admin">Admin Site</a>{% endif %}
+            <a href="https://github.com/GordonsBeard/elo" title="Github Code">Github Repo</a>{% if user.is_staff %} + <a href="{% url 'admin:index' %}">Admin Site</a>{% endif %}
         </div><!-- footer -->
     </body>
 </html>

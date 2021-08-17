@@ -1,11 +1,11 @@
 ﻿{% extends "layout.html" %}
 
-{% load staticfiles %}
+{% load static %}
 {% block head %}{% endblock head %}
 
 
 {% block content %}
-<form action="/add_game/" method="post">
+<form action="{% url 'ladder:add_game' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit" />

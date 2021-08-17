@@ -1,20 +1,15 @@
 ﻿from django.conf.urls import include, url
 from django.conf import settings
 from django.contrib import admin
-import django.views
 import ladder.views
 import elo.views
+from django.urls import include, path
 
-admin.autodiscover()
-
+app_name = 'elo'
 urlpatterns = [
-    url(r'^$',                      ladder.views.index, name='index'),
-    url(r'^l/',                     include('ladder.urls', namespace = "ladder")),
-    url(r'^u/',                     include('usercontrol.urls', namespace = "user")),
-    url(r'^admin/',                 include(admin.site.urls)),
-    url(r'^openid/complete/$',      elo.views.login),
-    url(r'^openid/',                include('django_openid_auth.urls')),
-    url(r'^logout/$',               elo.views.logout_view),
-    url(r'^create/$',               ladder.views.create_ladder),
-    url(r'^add_game/$',             ladder.views.add_game),
+    url(r'^$',          ladder.views.index,                             name='index'),
+    url(r'^l/',         include(('ladder.urls', 'ladder'),              namespace = 'ladder')),
+    url(r'^u/',         include(('usercontrol.urls', 'usercontrol'),    namespace = 'user')),
+    url(r'^logout/$',   elo.views.logout_view,                          name='logout'),
+    url(r'^admin/',     admin.site.urls,                                name='admin'),
 ]

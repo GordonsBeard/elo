@@ -2,14 +2,11 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, render, render_to_response
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from ladder.models import Rank, Challenge, Match, _get_user_challenges
-from ladder.helpers import paged
 from ladder.exceptions import PlayerNotInvolved
-from datetime import datetime
 
 PROFILE_RECENT_MATCHES    = 5         # How many matches to show under the "Recent Matches" header
 PROFILE_ACTIVE_LADDERS    = 5         # How many ladders to show under the "Active Ladders" header
@@ -31,7 +28,7 @@ def profile( request, username ) :
     ranks             = [(r,r.ladder.latest_match()) for r in ladders[:PROFILE_ACTIVE_LADDERS]]
 
     # Get common ladders
-    if request.user.is_authenticated() and not user == request.user :
+    if request.user.is_authenticated and not user == request.user :
         # TODO : find these more efficiently
         # common_ladders is the intersection of user's ladders and request.user's ladders
         # invite_ladders is the difference of request.user's ladders (that they can invite to) and user's ladders
@@ -42,20 +39,20 @@ def profile( request, username ) :
         invite_ladders    = []
 
     return render( request, "profile.html", { 'userp':user, 'stats':stats, 'matches':matches, 'ranks':ranks, 'common':common_ladders, 'invite':invite_ladders } )
-@paged
+
 def match_list( request, username, page_info ) :
     user            = get_object_or_404( User, username = username )
     all_matches     = Match.objects.filter( Q( challenger = user ) | Q( challengee = user ) )
     matches         = all_matches.order_by( '-date_complete' )[page_info.get_item_slice()]
     page_info.set_item_count( all_matches.count() )
 
-    return render_to_response('user_match_list.html', { 'userp':user, 'pageinfo':page_info, 'matches':matches }, context_instance=RequestContext(request))
+    return render(request, 'user_match_list.html', { 'userp':user, 'pageinfo':page_info, 'matches':matches })
 
 @login_required
 def message_list( request ) :
     num_challenges    = _get_user_challenges( request.user ).filter( accepted = 0 ).count()
     num_matches       = Match.objects.filter( Q(winner__isnull = True) & ( Q(challengee = request.user) | Q(challenger = request.user) ) ).count()
-    return render( request, "messages.html", { 'num_challenges':num_challenges, 'num_matches':num_matches } )
+    return render(request, "messages.html", { 'num_challenges':num_challenges, 'num_matches':num_matches } )
 
 @login_required
 def message_challenges( request ) :

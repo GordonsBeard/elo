@@ -5,6 +5,9 @@ import ladder.views
 admin.autodiscover()
 
 urlpatterns = [
+    url(r'^create/$',       ladder.views.create_ladder,     name='create'),
+    url(r'^add_game/$',     ladder.views.add_game,          name='add_game'),
+
     url(r'^(?P<ladder_slug>[-\w]+)/', include([
         url(r'^$',                              ladder.views.index,                 name='detail'),
         url(r'^matches/$',                      ladder.views.match_list,            name='match_list'),

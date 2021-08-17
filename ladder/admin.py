@@ -11,7 +11,7 @@ class RankInline( admin.TabularInline ) :
 
 class LadderAdmin( admin.ModelAdmin ) :
     inlines = [RankInline]
-    list_display = ('__unicode__','created','end_date','players')
+    list_display = ('__str__','created','end_date','players')
 
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('date_challenged', 'ladder', 'challenger_name', 'challengee_name', 'winner_name')
