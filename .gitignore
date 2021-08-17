@@ -2,7 +2,6 @@
 env/
 .sqlite3
 migrations/
-elo/settings.py
 db.sqlite3
 __pycache__/
 .vscode/
